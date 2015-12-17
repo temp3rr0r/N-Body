@@ -12,33 +12,38 @@
 #include "tbb/concurrent_vector.h"
 #include "ParticleHandler.h"
 #include <tbb/parallel_for.h>
-#include <complex>
 
 void simulate_tbb(tbb::concurrent_vector<Particle>& particles, double total_time_steps, double time_step, size_t particle_count,
 	size_t universe_size_x, size_t universe_size_y) {
+
 	// Simulate
-	// TODO: check copy local/swap?
+	int png_step_counter = 0;
 	for (double current_time_step = 0.0; current_time_step < total_time_steps; current_time_step += time_step) {
+
 		parallel_for(tbb::blocked_range<size_t>(0, particle_count),
 			[&](const tbb::blocked_range<size_t>& r) {
+			Particle current_particle = particles[r.begin()];
 			for (size_t i = r.begin(); i < r.end(); ++i) {
-				particles[i].reset_forces();
-				for (size_t j = 0; j < particle_count; ++j) {
+				current_particle = particles[i];
+				for (size_t j = 0; j < particle_count; ++j) {					
 					if (j != i)
-						particles[i].add_force(particles[j]);
+						current_particle.add_acceleration(particles[j]);
 				}
+				particles[i] = current_particle;
 			}
-
 		});
 		parallel_for(tbb::blocked_range<size_t>(0, particle_count),
-			[&](const tbb::blocked_range<size_t>& r) {
-			for (size_t index = r.begin(); index < r.end(); ++index)
-				particles[index].advance(time_step);
-		});
+			[&](const tbb::blocked_range<size_t>& r) {  
+				for (size_t index = r.begin(); index < r.end(); ++index) {
+					particles[index].advance(time_step);
+				}
+			});
 
-		if (SAVE_ALL_PNG_STEPS) {
+		++png_step_counter;
+		if (SAVE_ALL_PNG_STEPS && png_step_counter >= SAVE_PNG_EVERY) {
+			png_step_counter = 0;
 
-			std::string file_name = "universe_serial_timestep_" + std::to_string(current_time_step) + ".png";
+			std::string file_name = "universe_tbb_timestep_" + std::to_string(current_time_step) + ".png";
 
 			ParticleHandler::universe_to_png(ParticleHandler::to_vector(particles), universe_size_x, universe_size_y, file_name.c_str());
 		}
@@ -47,22 +52,25 @@ void simulate_tbb(tbb::concurrent_vector<Particle>& particles, double total_time
 
 void simulate_serial(std::vector<Particle>& particles, double total_time_steps, double time_step, size_t particle_count,
 	size_t universe_size_x, size_t universe_size_y) {
-	// Simulate
+
+	int png_step_counter = 0;
 	for (double current_time_step = 0.0; current_time_step < total_time_steps; current_time_step += time_step) {
+
 		for (size_t i = 0; i < particle_count; ++i) {
-			particles[i].reset_forces();
 			for (size_t j = 0; j < particle_count; ++j) {
 				if (j != i)
-					particles[i].add_force(particles[j]);
+					particles[i].add_acceleration(particles[j]);
 			}
 		}
 
-		//loop again to update the time stamp here
-		for (Particle& particle : particles) {
-			particle.advance(time_step);
+		for (size_t index = 0; index < particle_count; ++index) {
+			particles[index].advance(time_step);
 		}
-		if (SAVE_ALL_PNG_STEPS) {
 
+		++png_step_counter;
+		if (SAVE_ALL_PNG_STEPS && png_step_counter >= SAVE_PNG_EVERY) {
+		
+			png_step_counter = 0;
 			std::string file_name = "universe_serial_timestep_" + std::to_string(current_time_step) + ".png";
 
 			ParticleHandler::universe_to_png(particles, universe_size_x, universe_size_y, file_name.c_str());
@@ -81,9 +89,9 @@ int main()
 	size_t universe_size_y = UNIVERSE_SIZE_Y;
 
 	particle_count = 200;
-	total_time_steps = 0.5;
-	universe_size_x = 80;
-	universe_size_y = 60;
+	total_time_steps = 20;
+	universe_size_x = 20;
+	universe_size_y = 40;
 
 	if (total_time_steps > 0.0 & particle_count > 0 && universe_size_x > 0 && universe_size_y > 0) {
 		
@@ -137,7 +145,7 @@ int main()
 		}
 
 		if (SAVE_PNG) {
-			ParticleHandler::universe_to_png(particles, universe_size_x, universe_size_y, "final_serial_universe.png");
+			ParticleHandler::universe_to_png(particles_serial, universe_size_x, universe_size_y, "final_serial_universe.png");
 			ParticleHandler::universe_to_png(ParticleHandler::to_vector(particles_tbb), universe_size_x, universe_size_y, "final_tbb_universe.png");
 		}
 
