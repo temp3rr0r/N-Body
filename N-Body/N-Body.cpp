@@ -11,26 +11,46 @@
 #include "tbb/cache_aligned_allocator.h"
 #include "tbb/concurrent_vector.h"
 #include "ParticleHandler.h"
+#include <tbb/parallel_for.h>
+
+void simulate_tbb(tbb::concurrent_vector<Particle>& particles, double total_time_steps, double time_step, size_t particle_count) {
+	// Simulate
+	for (double current_Time_step = 0.0; current_Time_step < total_time_steps; current_Time_step += time_step) {
+		parallel_for(tbb::blocked_range<size_t>(0, particle_count),
+			[&](const tbb::blocked_range<size_t>& r) {
+			for (size_t i = r.begin(); i < r.end(); ++i) {
+				particles[i].reset_forces();
+				for (size_t j = 0; j < particle_count; ++j) {
+					if (j != i)
+						particles[i].add_force(particles[j]);
+				}
+			}
+
+		});
+		parallel_for(tbb::blocked_range<size_t>(0, particle_count),
+			[&](const tbb::blocked_range<size_t>& r) {
+			for (size_t index = r.begin(); index < r.end(); ++index)
+				particles[index].advance(time_step);
+		});
+	}
+}
 
 void simulate_serial(std::vector<Particle>& particles, double total_time_steps, double time_step, size_t particle_count) {
+	// Simulate
+	for (double current_Time_step = 0.0; current_Time_step < total_time_steps; current_Time_step += time_step) {
+		for (size_t i = 0; i < particle_count; ++i) {
+			particles[i].reset_forces();
+			for (size_t j = 0; j < particle_count; ++j) {
+				if (j != i)
+					particles[i].add_force(particles[j]);
+			}
+		}
 
-	//for (double iteration = 0; iter)
-	//for (int count = 0; count < numberofiterations; ++count) {
-	//	for (int i = 0; i < N; ++i) {
-	//		particles[i].resetForce();
-	//		for (int j = 0; j < N; ++j) {
-	//			if (i != j) {
-	//				particles[i].addForce(particles[j]);
-	//			}
-	//		}
-	//	}
-	//	//loop again to update the time stamp here
-	//	for (auto& particle : particles) {
-	//		particle.update(TIMESTAMP);
-	//	}
-	//	//std::copy(std::begin(particles), std::end(particles),
-	//	//	std::istream_iterator<Particle>(std::cout));
-	//}
+		//loop again to update the time stamp here
+		for (Particle& particle : particles) {
+			particle.advance(time_step);
+		}
+	}
 }
 
 int main()
@@ -43,8 +63,10 @@ int main()
 	size_t universe_size_x = UNIVERSE_SIZE_X;
 	size_t universe_size_y = UNIVERSE_SIZE_Y;
 
-	particle_count = 500;
-	total_time_steps = 50;
+	particle_count = 800;
+	total_time_steps = 10;
+	universe_size_x = 800;
+	universe_size_y = 600;
 
 	if (total_time_steps > 0.0 & particle_count > 0 && universe_size_x > 0 && universe_size_y > 0) {
 		
@@ -71,34 +93,19 @@ int main()
 		}
 
 		// Simulate
-		for (double current_Time_step = 0.0; current_Time_step < total_time_steps; current_Time_step += time_step) {
-			for (size_t i = 0; i < particle_count; ++i) {
-				particles[i].reset_forces();
-				for (size_t j = 0; j < particle_count; ++j) {
-					if (j != i)
-						particles[i].add_force(particles[j]);
-				}
-			}
-
-			//loop again to update the time stamp here
-			for (auto& particle : particles) {
-				particle.advance(time_step);
-			}
-		}
-
 		// Copy the particle universes
 		std::vector<Particle> particles_serial(particles);
 		tbb::concurrent_vector<Particle, tbb::cache_aligned_allocator<Particle>> particles_tbb(ParticleHandler::to_concurrent_vector(particles));
 
 		// Serial execution
 		before = tbb::tick_count::now();
-		//simulate_serial(particles_serial, universe_size_x, universe_size_y, total_time_steps); // Advance Simulation serially
+		simulate_serial(particles_serial, total_time_steps, time_step, particle_count); // Advance Simulation serially
 		after = tbb::tick_count::now();
 		std::cout << std::endl << "Serial execution: " << 1000 * (after - before).seconds() << " ms" << std::endl;
 
 		// Thread Building Blocks		
 		before = tbb::tick_count::now();
-		//simulate_tbb(particles_tbb, universe_size_x, universe_size_y, total_time_steps); // Advance Simulation with TBB
+		simulate_tbb(particles_tbb, total_time_steps, time_step, particle_count); // Advance Simulation with TBB
 		after = tbb::tick_count::now();
 		std::cout << std::endl << "Thread Building Blocks execution: " << 1000 * (after - before).seconds() << " ms" << std::endl;
 
@@ -114,7 +121,7 @@ int main()
 
 		if (SAVE_PNG) {
 			ParticleHandler::universe_to_png(particles, universe_size_x, universe_size_y, "final_serial_universe.png");
-			//grid_modifier.universe_to_png(grid_modifier.to_vector(universe_tbb), universe_size_x, universe_size_y, "final_tbb_universe.png");*/
+			ParticleHandler::universe_to_png(ParticleHandler::to_vector(particles_tbb), universe_size_x, universe_size_y, "final_tbb_universe.png");
 		}
 
 		system("pause");
