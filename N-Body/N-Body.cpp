@@ -81,7 +81,7 @@ void simulate_serial(std::vector<Particle>& particles, double total_time_steps, 
 int main()
 {
 	int thread_count = DEFAULT_NUMBER_OF_THREADS;
-	double gravity = GRAVITY;
+	double gravity = GRAVITATIONAL_CONSTANT;
 	size_t particle_count = DEFAULT_PARTICLE_COUNT;
 	double total_time_steps = DEFAULT_TOTAL_TIME_STEPS;
 	double time_step = TIME_STEP;

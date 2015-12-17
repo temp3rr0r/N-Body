@@ -187,7 +187,7 @@ static unsigned uivector_resizev(uivector* p, size_t size, unsigned value)
 
 static void uivector_init(uivector* p)
 {
-	p->data = NULL;
+	p->data = nullptr;
 	p->size = p->allocsize = 0;
 }
 

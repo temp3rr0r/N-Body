@@ -8,11 +8,8 @@ void ParticleHandler::allocate_random_particles(size_t particle_count, std::vect
 	if (particle_count > 0) {
 		std::random_device random_device_;
 		std::mt19937 mt_engine(random_device_());
-		std::uniform_real_distribution<> real_value(0, MAX_RANDOM);
 		std::uniform_real_distribution<> real_position_x(0, size_x);
 		std::uniform_real_distribution<> real_position_y(0, size_y);
-		//std::uniform_real_distribution<> real_position_x(0.4 * size_x, 0.6 * size_x);
-		//std::uniform_real_distribution<> real_position_y(0.4 * size_y, 0.6 * size_y);
 		std::uniform_real_distribution<> real_mass(0, MAX_MASS);
 
 		for (size_t i = 0; i < particle_count; ++i)

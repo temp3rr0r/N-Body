@@ -5,36 +5,34 @@
 
 void Particle::add_acceleration(Particle& interacting_particle) {
 
-//	double EPS = 3E4;
-//	double dx = interacting_particle.x_ - x_;
-//	double dy = interacting_particle.y_ - y_;
-//	double distance = sqrt(dx*dx + dy*dy);
-//	double F = (GRAVITY * mass_ * interacting_particle.mass_) / (distance * distance + EPS*EPS);
-//	force_x_ += F * dx / distance;
-//	force_y_ += F * dy / distance;
-
+	// Get distance
 	double dx = interacting_particle.x_ - x_;
 	double dy = interacting_particle.y_ - y_;
-	double distsq = dx*dx + dy*dy;
+
+	// Squares of distances
+	double distance_square = dx * dx + dy * dy;
 	
-	if (distsq < MIN_DISTANCE)
-		distsq = MIN_DISTANCE;
-	double dist = sqrt(distsq);
+	// Keep a minimum square of distance
+	if (distance_square < MIN_DISTANCE)
+		distance_square = MIN_DISTANCE;
 
-	velocity_x_ = dx / dist;
-	velocity_y_ = dy / dist;
+	double distance = sqrt(distance_square);
 
-	double GFORCE = 1.0;
-	double Gdivd = GFORCE / distsq;
+	velocity_x_ = dx / distance;
+	velocity_y_ = dy / distance;
+		
+	double Gdivd = GRAVITATIONAL_CONSTANT / distance_square;
 
-	double ai = Gdivd * mass_;
-	double aj = Gdivd * interacting_particle.mass_;
+	double acceleration_factor = Gdivd * mass_;
+	double interacting_acceleration_factor = Gdivd * interacting_particle.mass_;
 
-	acceleration_x_ -= ai * velocity_x_;
-	acceleration_y_ -= ai * velocity_y_;
+	// Apply accelerations
 
-	interacting_particle.acceleration_x_ += aj * velocity_x_;
-	interacting_particle.acceleration_y_ += aj * velocity_y_;
+	acceleration_x_ -= acceleration_factor * velocity_x_;
+	acceleration_y_ -= acceleration_factor * velocity_y_;
+
+	interacting_particle.acceleration_x_ += interacting_acceleration_factor * velocity_x_;
+	interacting_particle.acceleration_y_ += interacting_acceleration_factor * velocity_y_;
 }
 
 void Particle::advance(double time_step) {
@@ -43,9 +41,11 @@ void Particle::advance(double time_step) {
 	velocity_x_ += time_step * acceleration_x_;
 	velocity_y_ += time_step * acceleration_y_;
 
+	// Get the new position
 	x_ += velocity_x_ * time_step;
 	y_ += velocity_y_ * time_step;
 
+	// If out of points, reverse direction
 	if (x_ < 0) {
 		velocity_x_ *= -1;
 		x_ *= -1;
@@ -62,6 +62,7 @@ void Particle::advance(double time_step) {
 		y_ = UNIVERSE_SIZE_Y - y_;
 	}
 
+	// Reset accelerations
 	acceleration_x_ = 0.0;
 	acceleration_y_ = 0.0;
 }
