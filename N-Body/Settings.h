@@ -2,6 +2,7 @@
 
 static const bool VERBOSE = false;
 static const bool SAVE_PNG = true;
+static const bool SAVE_ALL_PNG_STEPS = true;
 
 static const int DEFAULT_NUMBER_OF_THREADS = 4;
 
@@ -11,7 +12,7 @@ static const double TIME_STEP = 0.1;
 
 static const double GRAVITY = 6.673e-11;
 
-static const double MAX_RANDOM = 1.0;
+static const double MAX_RANDOM = 10.0;
 static const double MAX_MASS = 1.0;
 
 static const int UNIVERSE_SIZE_X = 800;
