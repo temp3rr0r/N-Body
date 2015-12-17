@@ -3,7 +3,7 @@
 #include <cmath>
 #include "Settings.h"
 
-inline void Particle::add_force(Particle& interacting_particle) {
+void Particle::add_force(const Particle& interacting_particle) {
 
 	double EPS = 3E4;
 	double dx = interacting_particle.x_ - x_;
@@ -14,15 +14,30 @@ inline void Particle::add_force(Particle& interacting_particle) {
 	force_y_ += F * dy / distance;
 }
 
-inline void Particle::advance(double time_step) {
+void Particle::advance(double time_step) {
 	velocity_x_ += time_step * force_x_ / mass_;
 	velocity_y_ += time_step * force_y_ / mass_;
 
 	x_ += time_step * force_x_ / mass_;
-	y_ += time_step * force_y_ / mass_;
+	if (x_ < 0 || x_ > UNIVERSE_SIZE_X) {
+		velocity_x_ *= -1;
+		x_ *= -1;
+	} else if (x_ > UNIVERSE_SIZE_X) {
+		velocity_x_ *= -1;
+		x_ -= UNIVERSE_SIZE_X;
+	}
+	
+	y_ += time_step * force_y_ / mass_;	
+	if (y_ < 0 || y_ > UNIVERSE_SIZE_Y) {
+		velocity_y_ *= -1;
+		y_ *= -1;
+	} else if (y_ > UNIVERSE_SIZE_Y) {
+		velocity_y_ *= -1;
+		y_ -= UNIVERSE_SIZE_Y;
+	}
 }
 
-inline void Particle::reset_forces() {
+void Particle::reset_forces() {
 	force_x_ = 0.0;
 	force_y_ = 0.0;
 }
