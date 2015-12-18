@@ -93,7 +93,14 @@ int main()
 	universe_size_x = 20;
 	universe_size_y = 40;
 
-	if (total_time_steps > 0.0 & particle_count > 0 && universe_size_x > 0 && universe_size_y > 0) {
+	// TODO: check intrinsics
+	auto xy = _mm_setr_pd(0.5, 1.5);
+	auto interacting_xy = _mm_setr_pd(1.5, 2.5);
+	auto addition3 = _mm_add_sd(xy, interacting_xy);
+	auto added_double = addition3.m128d_f64[0];	
+	std::cout << "added xy? (0.5 + 1.5):" << std::to_string(added_double) << std::endl;
+
+	if (total_time_steps > 0.0 && particle_count > 0 && universe_size_x > 0 && universe_size_y > 0) {
 		
 		// Print calculation info
 		std::cout << "= Parallel N-Body simulation serially and with Thread Building Blocks =" << std::endl;
