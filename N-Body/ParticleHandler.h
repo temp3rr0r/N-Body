@@ -1,7 +1,7 @@
 #pragma once
 #include "Particle.h"
 #include <vector>
-#include <tbb/concurrent_vector.h>
+#include "tbb/concurrent_vector.h"
 
 class ParticleHandler
 {
@@ -10,5 +10,6 @@ public:
 	static void universe_to_png(const std::vector<Particle>& universe, size_t universe_size_x, size_t universe_size_y, const char* filename);
 	static tbb::concurrent_vector<Particle> to_concurrent_vector(const std::vector<Particle>& input_particles);
 	static std::vector<Particle> to_vector(const tbb::concurrent_vector<Particle>& input_particles);
+	static bool are_equal(const std::vector<Particle>& first_particles, const std::vector<Particle>& second_particles);
 };
 

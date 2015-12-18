@@ -3,7 +3,7 @@
 #include <cmath>
 #include "Settings.h"
 
-void Particle::add_acceleration(Particle& interacting_particle) {
+void Particle::add_acceleration(const Particle& interacting_particle) {
 
 	// Get distance
 	double dx = interacting_particle.x_ - x_;
@@ -30,9 +30,6 @@ void Particle::add_acceleration(Particle& interacting_particle) {
 
 	acceleration_x_ -= acceleration_factor * velocity_x_;
 	acceleration_y_ -= acceleration_factor * velocity_y_;
-
-	interacting_particle.acceleration_x_ += interacting_acceleration_factor * velocity_x_;
-	interacting_particle.acceleration_y_ += interacting_acceleration_factor * velocity_y_;
 }
 
 void Particle::advance(double time_step) {
@@ -45,7 +42,7 @@ void Particle::advance(double time_step) {
 	x_ += velocity_x_ * time_step;
 	y_ += velocity_y_ * time_step;
 
-	// If out of points, reverse direction
+	// If out of grid limits, reverse direction and set valid position
 	if (x_ < 0) {
 		velocity_x_ *= -1;
 		x_ *= -1;

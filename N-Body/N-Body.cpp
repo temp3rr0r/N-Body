@@ -12,6 +12,7 @@
 #include "tbb/concurrent_vector.h"
 #include "ParticleHandler.h"
 #include <tbb/parallel_for.h>
+#include <cassert>
 
 void simulate_tbb(tbb::concurrent_vector<Particle>& particles, double total_time_steps, double time_step, size_t particle_count,
 	size_t universe_size_x, size_t universe_size_y) {
@@ -40,7 +41,7 @@ void simulate_tbb(tbb::concurrent_vector<Particle>& particles, double total_time
 			});
 
 		++png_step_counter;
-		if (SAVE_ALL_PNG_STEPS && png_step_counter >= SAVE_PNG_EVERY) {
+		if (SAVE_INTERMEDIATE_PNG_STEPS && SAVE_PNG && png_step_counter >= SAVE_PNG_EVERY) {
 			png_step_counter = 0;
 
 			std::string file_name = "universe_tbb_timestep_" + std::to_string(current_time_step) + ".png";
@@ -68,7 +69,7 @@ void simulate_serial(std::vector<Particle>& particles, double total_time_steps, 
 		}
 
 		++png_step_counter;
-		if (SAVE_ALL_PNG_STEPS && png_step_counter >= SAVE_PNG_EVERY) {
+		if (SAVE_INTERMEDIATE_PNG_STEPS && SAVE_PNG && png_step_counter >= SAVE_PNG_EVERY) {
 		
 			png_step_counter = 0;
 			std::string file_name = "universe_serial_timestep_" + std::to_string(current_time_step) + ".png";
@@ -88,10 +89,10 @@ int main()
 	size_t universe_size_x = UNIVERSE_SIZE_X;
 	size_t universe_size_y = UNIVERSE_SIZE_Y;
 
-	particle_count = 200;
-	total_time_steps = 20;
-	universe_size_x = 20;
-	universe_size_y = 40;
+	particle_count = 500;
+	total_time_steps = 10;
+	universe_size_x = 800;
+	universe_size_y = 800;
 
 	// TODO: check intrinsics
 	auto xy = _mm_setr_pd(0.5, 1.5);
@@ -134,12 +135,17 @@ int main()
 		simulate_serial(particles_serial, total_time_steps, time_step, particle_count, universe_size_x, universe_size_y); // Advance Simulation serially
 		after = tbb::tick_count::now();
 		std::cout << std::endl << "Serial execution: " << 1000 * (after - before).seconds() << " ms" << std::endl;
-
+		
 		// Thread Building Blocks		
 		before = tbb::tick_count::now();
 		simulate_tbb(particles_tbb, total_time_steps, time_step, particle_count, universe_size_x, universe_size_y); // Advance Simulation with TBB
 		after = tbb::tick_count::now();
 		std::cout << std::endl << "Thread Building Blocks execution: " << 1000 * (after - before).seconds() << " ms" << std::endl;
+
+		// Assert
+		assert(ParticleHandler::are_equal(particles_serial, ParticleHandler::to_vector(particles_tbb)) == true); // compare serial with parallel
+		assert(ParticleHandler::are_equal(particles, particles_serial) == false); // compare serial with init
+		assert(ParticleHandler::are_equal(particles, ParticleHandler::to_vector(particles_tbb)) == false); // compare parallel with init
 
 		// Show universe
 		if (VERBOSE) {
