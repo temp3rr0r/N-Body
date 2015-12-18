@@ -1,17 +1,13 @@
-// N-Body.cpp : Defines the entry point for the console application.
-//
-
-
 #include "Settings.h"
-#include <ostream>
 #include <iostream>
 #include <vector>
-#include "tbb/tick_count.h"
+#include <tbb/tick_count.h>
 #include "Particle.h"
-#include "tbb/cache_aligned_allocator.h"
-#include "tbb/concurrent_vector.h"
+#include <tbb/cache_aligned_allocator.h>
+#include <tbb/concurrent_vector.h>
 #include "ParticleHandler.h"
 #include <tbb/parallel_for.h>
+#include <tbb/task_scheduler_init.h>
 #include <cassert>
 
 void simulate_tbb(tbb::concurrent_vector<Particle>& particles, double total_time_steps, double time_step, size_t particle_count,
@@ -23,22 +19,24 @@ void simulate_tbb(tbb::concurrent_vector<Particle>& particles, double total_time
 
 		parallel_for(tbb::blocked_range<size_t>(0, particle_count),
 			[&](const tbb::blocked_range<size_t>& r) {
-			Particle current_particle = particles[r.begin()];
-			for (size_t i = r.begin(); i < r.end(); ++i) {
-				current_particle = particles[i];
-				for (size_t j = 0; j < particle_count; ++j) {					
-					if (j != i)
-						current_particle.add_acceleration(particles[j]);
+				Particle current_particle = particles[r.begin()]; // Thread local variable
+				for (size_t i = r.begin(); i != r.end(); ++i) {
+					current_particle = particles[i];					
+					for (size_t j = i + 1; j < particle_count; ++j) { // Calculate pairs of accelerations
+						current_particle.add_acceleration_pairwise(particles[j]);					
+					}
+					particles[i] = current_particle;
 				}
-				particles[i] = current_particle;
 			}
-		});
+		);
+
 		parallel_for(tbb::blocked_range<size_t>(0, particle_count),
 			[&](const tbb::blocked_range<size_t>& r) {  
-				for (size_t index = r.begin(); index < r.end(); ++index) {
+				for (size_t index = r.begin(); index != r.end(); ++index) { // Using index range
 					particles[index].advance(time_step);
 				}
-			});
+			}
+		);
 
 		++png_step_counter;
 		if (SAVE_INTERMEDIATE_PNG_STEPS && SAVE_PNG && png_step_counter >= SAVE_PNG_EVERY) {
@@ -64,9 +62,8 @@ void simulate_serial(std::vector<Particle>& particles, double total_time_steps, 
 			}
 		}
 
-		for (size_t index = 0; index < particle_count; ++index) {
-			particles[index].advance(time_step);
-		}
+		for (Particle& current_particle : particles)
+			current_particle.advance(time_step);
 
 		++png_step_counter;
 		if (SAVE_INTERMEDIATE_PNG_STEPS && SAVE_PNG && png_step_counter >= SAVE_PNG_EVERY) {
@@ -89,10 +86,14 @@ int main()
 	size_t universe_size_x = UNIVERSE_SIZE_X;
 	size_t universe_size_y = UNIVERSE_SIZE_Y;
 
+	// User input data
 	particle_count = 500;
 	total_time_steps = 10;
 	universe_size_x = 800;
 	universe_size_y = 800;
+	thread_count = 4;
+
+	tbb::task_scheduler_init init(thread_count); // Set the number of threads
 
 	// TODO: check intrinsics
 	auto xy = _mm_setr_pd(0.5, 1.5);
@@ -131,16 +132,18 @@ int main()
 		tbb::concurrent_vector<Particle, tbb::cache_aligned_allocator<Particle>> particles_tbb(ParticleHandler::to_concurrent_vector(particles));
 
 		// Serial execution
+		std::cout << std::endl << "Serial execution: ";
 		before = tbb::tick_count::now();
 		simulate_serial(particles_serial, total_time_steps, time_step, particle_count, universe_size_x, universe_size_y); // Advance Simulation serially
 		after = tbb::tick_count::now();
-		std::cout << std::endl << "Serial execution: " << 1000 * (after - before).seconds() << " ms" << std::endl;
+		std::cout << 1000 * (after - before).seconds() << " ms" << std::endl;
 		
 		// Thread Building Blocks		
+		std::cout << std::endl << "Thread Building Blocks execution: ";
 		before = tbb::tick_count::now();
 		simulate_tbb(particles_tbb, total_time_steps, time_step, particle_count, universe_size_x, universe_size_y); // Advance Simulation with TBB
 		after = tbb::tick_count::now();
-		std::cout << std::endl << "Thread Building Blocks execution: " << 1000 * (after - before).seconds() << " ms" << std::endl;
+		std::cout << 1000 * (after - before).seconds() << " ms" << std::endl;
 
 		// Assert
 		assert(ParticleHandler::are_equal(particles_serial, ParticleHandler::to_vector(particles_tbb)) == true); // compare serial with parallel

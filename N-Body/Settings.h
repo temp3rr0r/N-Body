@@ -1,9 +1,9 @@
 #pragma once
 
 static const bool VERBOSE = false;
-static const bool SAVE_PNG = false;
+static const bool SAVE_PNG = true;
 
-static const bool SAVE_INTERMEDIATE_PNG_STEPS = true;
+static const bool SAVE_INTERMEDIATE_PNG_STEPS = false;
 static const int SAVE_PNG_EVERY = 500;
 
 static const int DEFAULT_NUMBER_OF_THREADS = 4;
