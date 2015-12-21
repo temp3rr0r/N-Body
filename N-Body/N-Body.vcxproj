@@ -150,7 +150,9 @@
     <ClInclude Include="lodepng.h" />
     <ClInclude Include="Particle.h" />
     <ClInclude Include="ParticleHandler.h" />
+    <ClInclude Include="QuadParticleTree.h" />
     <ClInclude Include="Settings.h" />
+    <ClInclude Include="TreeParticle.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lodepng.cpp" />
