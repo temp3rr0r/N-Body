@@ -159,6 +159,7 @@
     <ClCompile Include="N-Body.cpp" />
     <ClCompile Include="Particle.cpp" />
     <ClCompile Include="ParticleHandler.cpp" />
+    <ClCompile Include="QuadParticleTree.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

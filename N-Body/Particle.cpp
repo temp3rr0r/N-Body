@@ -88,3 +88,17 @@ void Particle::advance(double time_step) {
 	acceleration_x_ = 0.0;
 	acceleration_y_ = 0.0;
 }
+
+Particle Particle::operator+(const Particle& r) const {
+	return Particle(x_ + r.x_, y_ + r.y_, velocity_x_ + r.velocity_x_, velocity_y_ + r.velocity_y_, mass_ + r.mass_,
+	                acceleration_x_ + r.acceleration_x_, acceleration_y_ + r.acceleration_y_);
+}
+
+Particle Particle::operator-(const Particle& r) const {
+	return Particle(x_ - r.x_, y_ - r.y_, velocity_x_ - r.velocity_x_, velocity_y_ - r.velocity_y_, mass_ - r.mass_,
+	                acceleration_x_ - r.acceleration_x_, acceleration_y_ - r.acceleration_y_);
+}
+
+Particle Particle::operator*(float r) const {
+	return Particle(x_ * r, y_ * r, velocity_x_ * r, velocity_y_ * r, mass_ * r, acceleration_x_ * r, acceleration_y_ * r);
+}
