@@ -6,6 +6,8 @@
 #include "TreeParticle.h"
 #include "QuadParticleTree.h"
 
+
+// Generate random particles
 void ParticleHandler::allocate_random_particles(size_t particle_count, std::vector<Particle>& particles, size_t size_x, size_t size_y) {
 	if (particle_count > 0) {
 		std::random_device random_device_;
@@ -20,8 +22,8 @@ void ParticleHandler::allocate_random_particles(size_t particle_count, std::vect
 	}
 }
 
+// Generate an image from the given particle collection
 void ParticleHandler::universe_to_png(const std::vector<Particle>& universe, size_t universe_size_x, size_t universe_size_y, const char* filename) {
-	// Generate the image
 	uint32_t width = static_cast<uint32_t>(universe_size_y);
 	uint32_t height = static_cast<uint32_t>(universe_size_x);
 	std::vector<uint8_t> image;
@@ -37,13 +39,16 @@ void ParticleHandler::universe_to_png(const std::vector<Particle>& universe, siz
 		}
 	}
 
+	// Paint red all the particles
 	for (const Particle& current_particle : universe) {
 		image[4 * width * static_cast<uint32_t>(current_particle.x_) + 4 * static_cast<uint32_t>(current_particle.y_) + 0] = 255; // red
 	}
 
+	// Do save to png
 	lodepng::encode(filename, image, width, height);
 }
 
+// Convert a vector particle collection into a concurrent vector collection
 tbb::concurrent_vector<Particle> ParticleHandler::to_concurrent_vector(const std::vector<Particle>& input_particles) {
 	tbb::concurrent_vector<Particle, tbb::cache_aligned_allocator<Particle>> returning_concurrent_vector;
 
@@ -52,6 +57,7 @@ tbb::concurrent_vector<Particle> ParticleHandler::to_concurrent_vector(const std
 	return returning_concurrent_vector;
 }
 
+// Convert a concurrent vector particle collection into a vector collection
 std::vector<Particle> ParticleHandler::to_vector(const tbb::concurrent_vector<Particle>& input_particles) {
 	std::vector<Particle> returning_vector;
 
@@ -61,6 +67,7 @@ std::vector<Particle> ParticleHandler::to_vector(const tbb::concurrent_vector<Pa
 	return returning_vector;
 }
 
+// Check if two particle collections contain exactly the same particles in terms of location, velocity, mass and acceleration
 bool ParticleHandler::are_equal(const std::vector<Particle>& first_particles, const std::vector<Particle>& second_particles) {
 	bool are_equal = false;
 
@@ -77,7 +84,6 @@ bool ParticleHandler::are_equal(const std::vector<Particle>& first_particles, co
 			}
 		}
 	}	
-
 	return are_equal;
 }
 
@@ -90,9 +96,37 @@ QuadParticleTree* ParticleHandler::to_quad_tree(const std::vector<Particle>& inp
 	// Insert the points in the quad tree
 	TreeParticle *quad_tree_particles = new TreeParticle[input_particles.size()];
 	for (size_t i = 0; i < input_particles.size(); ++i) {
-		quad_tree_particles[i].setPosition(input_particles[i]);
+		quad_tree_particles[i].set_particle(input_particles[i]);
 		quad_particle_tree->insert(quad_tree_particles + i);
 	}
 
 	return quad_particle_tree;
+}
+
+QuadParticleTree* ParticleHandler::to_quad_tree(std::vector<TreeParticle*> quad_tree_particles, size_t size_x, size_t size_y) {
+	QuadParticleTree *quad_particle_tree = new QuadParticleTree(Particle(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0),
+	Particle(static_cast<float>(size_x), static_cast<float>(size_y), 0.0f, 0.0f, 0.0f, 0.0f, 0.0));
+
+	for (size_t i = 0; i < quad_tree_particles.size(); ++i) {
+		quad_particle_tree->insert(quad_tree_particles[i]);
+	}
+	return quad_particle_tree;
+}
+
+std::vector<Particle> ParticleHandler::to_vector(std::vector<TreeParticle*> quad_tree_particles, size_t size_x, size_t size_y) {
+	std::vector<Particle> returning_vector;
+
+	for (TreeParticle* tree_particle : quad_tree_particles)
+		returning_vector.push_back(tree_particle->get_particle());
+
+	return returning_vector;
+}
+
+std::vector<Particle> ParticleHandler::to_vector(const std::vector<TreeParticle> quad_tree_particles, size_t size_x, size_t size_y) {
+	std::vector<Particle> returning_vector;
+
+	for (TreeParticle tree_particle : quad_tree_particles)
+		returning_vector.push_back(tree_particle.get_particle());
+
+	return returning_vector;
 }

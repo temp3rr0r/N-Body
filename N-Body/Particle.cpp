@@ -3,7 +3,10 @@
 #include <cmath>
 #include "Settings.h"
 
+// Apply acceleration on both particles in one sweep
 void Particle::add_acceleration_pairwise(Particle& interacting_particle) {
+
+	// We calculate the acceleration instead of the forces for faster calculation
 
 	// Get distances
 	double dx = interacting_particle.x_ - x_;
@@ -21,8 +24,9 @@ void Particle::add_acceleration_pairwise(Particle& interacting_particle) {
 	velocity_x_ = dx / distance;
 	velocity_y_ = dy / distance;
 
-	double acceleration_factor = (GRAVITATIONAL_CONSTANT / distance_square) * mass_;
-	double interacting_acceleration_factor = (GRAVITATIONAL_CONSTANT / distance_square) * interacting_particle.mass_;
+	// Use the mass of the other particle
+	double acceleration_factor = (GRAVITATIONAL_CONSTANT / distance_square) * interacting_particle.mass_;
+	double interacting_acceleration_factor = (GRAVITATIONAL_CONSTANT / distance_square) * mass_;
 
 	// Apply accelerations
 	acceleration_x_ -= acceleration_factor * velocity_x_;
@@ -32,6 +36,7 @@ void Particle::add_acceleration_pairwise(Particle& interacting_particle) {
 	interacting_particle.acceleration_y_ += interacting_acceleration_factor * velocity_y_;
 }
 
+// Aquire the distance of the particle from another particle
 double Particle::get_distance(const Particle& second_particle) const {
 	// Get distances
 	double dx = x_ - second_particle.x_;
@@ -47,6 +52,33 @@ double Particle::get_distance(const Particle& second_particle) const {
 	return sqrt(distance_square);
 }
 
+// Apply acceleration on one particle from a center of mass
+void Particle::add_acceleration(double total_mass, double center_of_mass_x, double center_of_mass_y) {
+
+	// Get distances
+	double dx = center_of_mass_x - x_;
+	double dy = center_of_mass_y - y_;
+
+	// Square of distances
+	double distance_square = dx * dx + dy * dy;
+
+	// Keep a minimum square of distance
+	if (distance_square < MIN_DISTANCE)
+		distance_square = MIN_DISTANCE;
+
+	double distance = sqrt(distance_square);
+
+	velocity_x_ = dx / distance;
+	velocity_y_ = dy / distance;
+
+	double acceleration_factor = (GRAVITATIONAL_CONSTANT / distance_square) * total_mass;
+
+	// Apply accelerations
+	acceleration_x_ -= acceleration_factor * velocity_x_;
+	acceleration_y_ -= acceleration_factor * velocity_y_;
+}
+
+// Apply acceleration on one particle from forces of another particle
 void Particle::add_acceleration(const Particle& interacting_particle) {
 
 	// Get distances
@@ -65,13 +97,14 @@ void Particle::add_acceleration(const Particle& interacting_particle) {
 	velocity_x_ = dx / distance;
 	velocity_y_ = dy / distance;		
 
-	double acceleration_factor = (GRAVITATIONAL_CONSTANT / distance_square) * mass_;
+	double acceleration_factor = (GRAVITATIONAL_CONSTANT / distance_square) * interacting_particle.mass_;
 
 	// Apply accelerations
 	acceleration_x_ -= acceleration_factor * velocity_x_;
 	acceleration_y_ -= acceleration_factor * velocity_y_;
 }
 
+// Moves the current particle for a specific time
 void Particle::advance(double time_step) {
 
 	// Add accelerations on velocities
@@ -104,16 +137,19 @@ void Particle::advance(double time_step) {
 	acceleration_y_ = 0.0;
 }
 
+// Combine two particles into one by adding them
 Particle Particle::operator+(const Particle& r) const {
 	return Particle(x_ + r.x_, y_ + r.y_, velocity_x_ + r.velocity_x_, velocity_y_ + r.velocity_y_, mass_ + r.mass_,
 	                acceleration_x_ + r.acceleration_x_, acceleration_y_ + r.acceleration_y_);
 }
 
+// Combine two particles into one by substracting them
 Particle Particle::operator-(const Particle& r) const {
 	return Particle(x_ - r.x_, y_ - r.y_, velocity_x_ - r.velocity_x_, velocity_y_ - r.velocity_y_, mass_ - r.mass_,
 	                acceleration_x_ - r.acceleration_x_, acceleration_y_ - r.acceleration_y_);
 }
 
-Particle Particle::operator*(float r) const {
+// Multiply a particle by a scalar number
+Particle Particle::operator*(double r) const {
 	return Particle(x_ * r, y_ * r, velocity_x_ * r, velocity_y_ * r, mass_ * r, acceleration_x_ * r, acceleration_y_ * r);
 }

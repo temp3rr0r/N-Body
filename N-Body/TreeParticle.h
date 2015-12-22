@@ -1,20 +1,29 @@
 #pragma once
 #include "Particle.h"
 
+// A class wrapper of typical particles for a Quad tree particle collection
 class TreeParticle {
-	Particle particle;
+	Particle particle_;
 public:
 	TreeParticle() { }
-	TreeParticle(const Particle& input_particle) : particle(input_particle) { }
-	const Particle& getPosition() const {
-		return particle;
+	TreeParticle(const Particle& input_particle) : particle_(input_particle) { }
+	const Particle& get_particle() const {
+		return particle_;
 	}
 
-	void setPosition(const Particle& input_particle) {
-		particle = input_particle;
+	void advance(double time_step) {
+		particle_.advance(time_step);
+	}
+
+	Particle get_particle() {
+		return particle_;
+	}
+
+	void set_particle(const Particle& input_particle) {
+		particle_ = input_particle;
 	}
 
 	float get_mass() const {
-		return particle.mass_;
+		return particle_.mass_;
 	}
 };

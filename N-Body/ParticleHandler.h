@@ -4,6 +4,7 @@
 #include <tbb/concurrent_vector.h>
 #include "QuadParticleTree.h"
 
+// Handles conversions, allocations and image saving of various particle collections
 class ParticleHandler
 {
 public:
@@ -13,5 +14,8 @@ public:
 	static std::vector<Particle> to_vector(const tbb::concurrent_vector<Particle>& input_particles);
 	static bool are_equal(const std::vector<Particle>& first_particles, const std::vector<Particle>& second_particles);
 	static QuadParticleTree* to_quad_tree(const std::vector<Particle>& input_particles, size_t size_x, size_t size_y);
+	static QuadParticleTree* to_quad_tree(std::vector<TreeParticle*> quad_tree_particles, size_t size_x, size_t size_y);
+	static std::vector<Particle> to_vector(std::vector<TreeParticle*> quad_tree_particles, size_t size_x, size_t size_y);
+	static std::vector<Particle> to_vector(const std::vector<TreeParticle> quad_tree_particles, size_t size_x, size_t size_y);
 };
 

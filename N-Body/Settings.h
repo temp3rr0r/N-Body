@@ -1,6 +1,8 @@
 #pragma once
 #include <cstdint>
 
+// Default N-Body simulation settings
+
 static const bool VERBOSE = false;
 static const bool SAVE_PNG = true;
 
