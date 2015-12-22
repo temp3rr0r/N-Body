@@ -9,6 +9,7 @@
 #include <tbb/parallel_for.h>
 #include <tbb/task_scheduler_init.h>
 #include <cassert>
+#include "QuadParticleTree.h"
 
 void simulate_tbb(tbb::concurrent_vector<Particle>& particles, double total_time_steps, double time_step, size_t particle_count,
 	size_t universe_size_x, size_t universe_size_y) {
@@ -45,6 +46,40 @@ void simulate_tbb(tbb::concurrent_vector<Particle>& particles, double total_time
 			std::string file_name = "universe_tbb_timestep_" + std::to_string(current_time_step) + ".png";
 
 			ParticleHandler::universe_to_png(ParticleHandler::to_vector(particles), universe_size_x, universe_size_y, file_name.c_str());
+		}
+	}
+}
+
+void simulate_serial_barnes_hut(std::vector<Particle>& particles, double total_time_steps, double time_step, size_t particle_count,
+	size_t universe_size_x, size_t universe_size_y) {
+
+	int png_step_counter = 0;
+	QuadParticleTree* quad_tree;
+	for (double current_time_step = 0.0; current_time_step < total_time_steps; current_time_step += time_step) {
+		
+		// TODO: Re-Allocate tree
+		quad_tree = ParticleHandler::to_quad_tree(particles, universe_size_x, universe_size_y);
+
+		// Apply acceleration for all the N particles by traversing the quad tree
+		for (size_t i = 0; i < particle_count; ++i) {
+			quad_tree->apply_acceleration(particles[i]);
+		}
+
+		// Advance particles
+		for (Particle& current_particle : particles)
+			current_particle.advance(time_step);
+
+		// TODO: delete tree
+		delete quad_tree;
+
+		++png_step_counter;
+		if (SAVE_INTERMEDIATE_PNG_STEPS && SAVE_PNG && png_step_counter >= SAVE_PNG_EVERY) {
+
+			png_step_counter = 0;
+			std::string file_name = "universe_serial_barnes_hut_timestep_" + std::to_string(current_time_step) + ".png";
+
+			// TODO: fix the ability to print universe
+			ParticleHandler::universe_to_png(particles, universe_size_x, universe_size_y, file_name.c_str());
 		}
 	}
 }
@@ -94,14 +129,7 @@ int main()
 	thread_count = 4;
 
 	tbb::task_scheduler_init init(thread_count); // Set the number of threads
-
-	// TODO: check intrinsics
-	auto xy = _mm_setr_pd(0.5, 1.5);
-	auto interacting_xy = _mm_setr_pd(1.5, 2.5);
-	auto addition3 = _mm_add_sd(xy, interacting_xy);
-	auto added_double = addition3.m128d_f64[0];	
-	std::cout << "added xy? (0.5 + 1.5):" << std::to_string(added_double) << std::endl;
-
+	
 	if (total_time_steps > 0.0 && particle_count > 0 && universe_size_x > 0 && universe_size_y > 0) {
 		
 		// Print calculation info
@@ -130,16 +158,24 @@ int main()
 		// Copy the particle universes
 		std::vector<Particle> particles_serial(particles);
 		tbb::concurrent_vector<Particle, tbb::cache_aligned_allocator<Particle>> particles_tbb(ParticleHandler::to_concurrent_vector(particles));
+		std::vector<Particle> particles_serial_barnes_hut(particles);
 
 		// Serial execution
-		std::cout << std::endl << "Serial execution: ";
+		std::cout << std::endl << "Serial execution... ";
 		before = tbb::tick_count::now();
 		simulate_serial(particles_serial, total_time_steps, time_step, particle_count, universe_size_x, universe_size_y); // Advance Simulation serially
 		after = tbb::tick_count::now();
 		std::cout << 1000 * (after - before).seconds() << " ms" << std::endl;
+
+		// Serial execution
+		std::cout << std::endl << "Serial execution (Barnes-Hut)... ";
+		before = tbb::tick_count::now();
+		simulate_serial_barnes_hut(particles_serial_barnes_hut, total_time_steps, time_step, particle_count, universe_size_x, universe_size_y); // Advance Simulation serially
+		after = tbb::tick_count::now();
+		std::cout << 1000 * (after - before).seconds() << " ms" << std::endl;
 		
 		// Thread Building Blocks		
-		std::cout << std::endl << "Thread Building Blocks execution: ";
+		std::cout << std::endl << "Thread Building Blocks execution... ";
 		before = tbb::tick_count::now();
 		simulate_tbb(particles_tbb, total_time_steps, time_step, particle_count, universe_size_x, universe_size_y); // Advance Simulation with TBB
 		after = tbb::tick_count::now();

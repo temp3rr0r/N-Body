@@ -11,11 +11,15 @@ inline QuadParticleTree::QuadParticleTree(const Particle& origin, const Particle
 inline QuadParticleTree::QuadParticleTree(const QuadParticleTree& copy) : origin(copy.origin), halfDimension(copy.halfDimension), data(copy.data), hasChildren(false) {
 }
 
+float QuadParticleTree::get_side_size() const {
+	return origin.get_distance(halfDimension);
+}
+
 inline float QuadParticleTree::get_total_mass() const {
 	return total_mass_;
 }
 
-inline QuadParticleTree::~QuadParticleTree() {
+QuadParticleTree::~QuadParticleTree() {
 	for (int i = 0; i < NUM_CHILDREN; ++i)
 		delete children[i];
 }
@@ -33,7 +37,7 @@ inline bool QuadParticleTree::isLeafNode() const {
 	return children[0] == nullptr;
 }
 
-inline void QuadParticleTree::insert(TreeParticle* point) {
+void QuadParticleTree::insert(TreeParticle* point) {
 
 	if (isLeafNode()) {
 		this->total_mass_ += point->get_mass();
@@ -85,9 +89,35 @@ inline void QuadParticleTree::insert(TreeParticle* point) {
 			this->center_of_mass_y_ = center_y / this->total_mass_;
 		}
 
-		int octant = getQuadrantContainingPoint(point->getPosition());
+		int quadrant = getQuadrantContainingPoint(point->getPosition());
 
-		children[octant]->insert(point);
+		children[quadrant]->insert(point);
+	}
+}
+
+
+void QuadParticleTree::apply_acceleration(Particle& input_particle) const {
+	// Start from root
+	if (isLeafNode()) {
+		if (data != nullptr) {
+			const Particle& leaf_particle = data->getPosition();
+			input_particle.add_acceleration(leaf_particle);
+		}
+	} else {
+		// Get distances
+		if (data != nullptr) {
+			const Particle& current_particle = data->getPosition();			
+			double distance_from_center_of_mass = input_particle.get_distance(current_particle);
+			double side = get_side_size();
+
+			if (side / distance_from_center_of_mass < THETA) {
+				input_particle.add_acceleration(current_particle);
+			} else {
+				// Go deeper in the tree
+				int quadtrant = getQuadrantContainingPoint(current_particle);
+				children[quadtrant]->apply_acceleration(input_particle);
+			}
+		}
 	}
 }
 

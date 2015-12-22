@@ -19,6 +19,8 @@ static const double GRAVITATIONAL_CONSTANT = 6.673e-11;
 static const double MAX_RANDOM = 1.0;
 
 static const double MAX_MASS = 1.0;
+
+static const double THETA = 0.5;
 static const uint8_t MAX_TREE_DEPTH = 100;
 
 static const int UNIVERSE_SIZE_X = 800;

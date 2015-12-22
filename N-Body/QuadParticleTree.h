@@ -19,10 +19,12 @@ class QuadParticleTree {
 public:
 	QuadParticleTree(const Particle& origin, const Particle& halfDimension);
 	QuadParticleTree(const QuadParticleTree& copy);
+	float get_side_size() const;
 	float get_total_mass() const;
 	~QuadParticleTree();
 	int getQuadrantContainingPoint(const Particle& point) const;
 	bool isLeafNode() const;
 	void insert(TreeParticle* point);
+	void apply_acceleration(Particle& input_particle) const;
 	void getPointsInsideBox(const Particle& bmin, const Particle& bmax, std::vector<TreeParticle*>& results) const;
 };

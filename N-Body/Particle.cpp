@@ -32,6 +32,21 @@ void Particle::add_acceleration_pairwise(Particle& interacting_particle) {
 	interacting_particle.acceleration_y_ += interacting_acceleration_factor * velocity_y_;
 }
 
+double Particle::get_distance(const Particle& second_particle) const {
+	// Get distances
+	double dx = x_ - second_particle.x_;
+	double dy = y_ - second_particle.y_;
+
+	// Square of distances
+	double distance_square = dx * dx + dy * dy;
+
+	// Keep a minimum square of distance
+	if (distance_square < MIN_DISTANCE)
+		distance_square = MIN_DISTANCE;
+
+	return sqrt(distance_square);
+}
+
 void Particle::add_acceleration(const Particle& interacting_particle) {
 
 	// Get distances

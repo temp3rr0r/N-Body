@@ -3,6 +3,8 @@
 #include "ParticleHandler.h"
 #include <tbb/concurrent_vector.h>
 #include "lodepng.h"
+#include "TreeParticle.h"
+#include "QuadParticleTree.h"
 
 void ParticleHandler::allocate_random_particles(size_t particle_count, std::vector<Particle>& particles, size_t size_x, size_t size_y) {
 	if (particle_count > 0) {
@@ -42,7 +44,6 @@ void ParticleHandler::universe_to_png(const std::vector<Particle>& universe, siz
 	lodepng::encode(filename, image, width, height);
 }
 
-
 tbb::concurrent_vector<Particle> ParticleHandler::to_concurrent_vector(const std::vector<Particle>& input_particles) {
 	tbb::concurrent_vector<Particle, tbb::cache_aligned_allocator<Particle>> returning_concurrent_vector;
 
@@ -73,11 +74,25 @@ bool ParticleHandler::are_equal(const std::vector<Particle>& first_particles, co
 
 				are_equal = false;
 				break;
-
 			}
 		}
-	}
-	
+	}	
 
 	return are_equal;
+}
+
+QuadParticleTree* ParticleHandler::to_quad_tree(const std::vector<Particle>& input_particles, size_t size_x, size_t size_y) {
+	
+	// Crate a new quad tree with limits from zero, up to grid size x and y
+	QuadParticleTree *quad_particle_tree = new QuadParticleTree(Particle(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0),
+		Particle(static_cast<float>(size_x), static_cast<float>(size_y), 0.0f, 0.0f, 0.0f, 0.0f, 0.0));
+
+	// Insert the points in the quad tree
+	TreeParticle *quad_tree_particles = new TreeParticle[input_particles.size()];
+	for (size_t i = 0; i < input_particles.size(); ++i) {
+		quad_tree_particles[i].setPosition(input_particles[i]);
+		quad_particle_tree->insert(quad_tree_particles + i);
+	}
+
+	return quad_particle_tree;
 }

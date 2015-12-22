@@ -22,6 +22,7 @@ public:
 		x_(x), y_(y), mass_(mass), velocity_x_(velocity_x), velocity_y_(velocity_y), acceleration_x_(acceleration_x), acceleration_y_(acceleration_y) {};
 
 	void add_acceleration_pairwise(Particle& interacting_particle);
+	double get_distance(const Particle& second_particle) const;
 	void add_acceleration(const Particle& interacting_particle);
 	void advance(double time_stamp);
 	Particle operator+(const Particle& r) const;
