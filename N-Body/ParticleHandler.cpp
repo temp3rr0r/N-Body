@@ -12,13 +12,13 @@ void ParticleHandler::allocate_random_particles(size_t particle_count, std::vect
 	if (particle_count > 0) {
 		std::random_device random_device_;
 		std::mt19937 mt_engine(random_device_());
-		std::uniform_real_distribution<> real_position_x(0, static_cast<double>(size_x));
-		std::uniform_real_distribution<> real_position_y(0, static_cast<double>(size_y));
+		std::uniform_real_distribution<> real_position_x(0, static_cast<float>(size_x));
+		std::uniform_real_distribution<> real_position_y(0, static_cast<float>(size_y));
 		std::uniform_real_distribution<> real_mass(0, MAX_MASS);
 
 		for (size_t i = 0; i < particle_count; ++i)
-			particles.push_back(Particle(real_position_x(mt_engine), real_position_y(mt_engine),
-				0.0, 0.0, real_mass(mt_engine), 0.0, 0.0));
+			particles.push_back(Particle(static_cast<float>(real_position_x(mt_engine)), static_cast<float>(real_position_y(mt_engine)),
+				0.0f, 0.0f, static_cast<float>(real_mass(mt_engine)), 0.0f, 0.0f));
 	}
 }
 

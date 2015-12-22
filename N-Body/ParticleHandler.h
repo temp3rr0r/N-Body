@@ -18,4 +18,3 @@ public:
 	static std::vector<Particle> to_vector(std::vector<TreeParticle*> quad_tree_particles, size_t size_x, size_t size_y);
 	static std::vector<Particle> to_vector(const std::vector<TreeParticle> quad_tree_particles, size_t size_x, size_t size_y);
 };
-

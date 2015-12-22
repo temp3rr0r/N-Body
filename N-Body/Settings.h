@@ -12,17 +12,17 @@ static const int SAVE_PNG_EVERY = 500;
 static const int DEFAULT_NUMBER_OF_THREADS = 4;
 
 static const int DEFAULT_PARTICLE_COUNT = 10;
-static const double DEFAULT_TOTAL_TIME_STEPS = 10.0;
-static const double TIME_STEP = 0.01;
-static const double MIN_DISTANCE = 10.0;
+static const float DEFAULT_TOTAL_TIME_STEPS = 10.0f;
+static const float TIME_STEP = 0.01f;
+static const float MIN_DISTANCE = 10.0f;
 
-static const double GRAVITATIONAL_CONSTANT = 6.673e-11;
+static const float GRAVITATIONAL_CONSTANT = 6.673e-11f;
 
-static const double MAX_RANDOM = 1.0;
+static const float MAX_RANDOM = 1.0f;
 
-static const double MAX_MASS = 1.0;
+static const float MAX_MASS = 1.0f;
 
-static const double THETA = 0.5;
+static const float THETA = 0.5f;
 static const uint8_t MAX_TREE_DEPTH = 100;
 
 static const int UNIVERSE_SIZE_X = 800;

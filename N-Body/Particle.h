@@ -3,11 +3,11 @@
 // Class that stores information for every particle
 class Particle {
 public:
-	double x_;
-	double y_;
-	double mass_;
-	double velocity_x_, velocity_y_;
-	double acceleration_x_, acceleration_y_;
+	float x_;
+	float y_;
+	float mass_;
+	float velocity_x_, velocity_y_;
+	float acceleration_x_, acceleration_y_;
 
 	// Default constructor
 	Particle() {
@@ -21,7 +21,7 @@ public:
 	}
 
 	// Constructor useful for center of mass particles
-	Particle(double x, double y, double mass) :
+	Particle(float x, float y, float mass) :
 		x_(x), y_(y), mass_(mass) {
 		velocity_x_ = 0.0;
 		velocity_y_ = 0.0;
@@ -30,17 +30,17 @@ public:
 	};
 
 	// Full constructor
-	Particle(double x, double y, double velocity_x, double velocity_y, double mass,
-		double acceleration_x, double acceleration_y) :
+	Particle(float x, float y, float velocity_x, float velocity_y, float mass,
+		float acceleration_x, float acceleration_y) :
 		x_(x), y_(y), mass_(mass), velocity_x_(velocity_x), velocity_y_(velocity_y),
 		acceleration_x_(acceleration_x), acceleration_y_(acceleration_y) {};
 
 	void add_acceleration_pairwise(Particle& interacting_particle);
-	double get_distance(const Particle& second_particle) const;
-	void add_acceleration(double total_mass, double center_of_mass_x, double center_of_mass_y);
+	float get_distance(const Particle& second_particle) const;
+	void add_acceleration(float total_mass, float center_of_mass_x, float center_of_mass_y);
 	void add_acceleration(const Particle& interacting_particle);
-	void advance(double time_stamp);
+	void advance(float time_stamp);
 	Particle operator+(const Particle& r) const;
 	Particle operator-(const Particle& r) const;
-	Particle operator*(double r) const;
+	Particle operator*(float r) const;
 };

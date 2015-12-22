@@ -11,7 +11,7 @@ public:
 		return particle_;
 	}
 
-	void advance(double time_step) {
+	void advance(float time_step) {
 		particle_.advance(time_step);
 	}
 

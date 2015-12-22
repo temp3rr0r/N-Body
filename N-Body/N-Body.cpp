@@ -12,12 +12,12 @@
 #include "QuadParticleTree.h"
 
 // Advance the simulation using Thread Bulding Blocks parallelization
-void simulate_tbb(tbb::concurrent_vector<Particle>& particles, double total_time_steps, double time_step, size_t particle_count,
+void simulate_tbb(tbb::concurrent_vector<Particle>& particles, float total_time_steps, float time_step, size_t particle_count,
 	size_t universe_size_x, size_t universe_size_y) {
 
 	// Do Simulate
 	int png_step_counter = 0;
-	for (double current_time_step = 0.0; current_time_step < total_time_steps; current_time_step += time_step) {
+	for (float current_time_step = 0.0; current_time_step < total_time_steps; current_time_step += time_step) {
 
 		parallel_for(tbb::blocked_range<size_t>(0, particle_count), // Get the range for this thread
 			[&](const tbb::blocked_range<size_t>& r) {
@@ -52,7 +52,7 @@ void simulate_tbb(tbb::concurrent_vector<Particle>& particles, double total_time
 	}
 }
 
-void simulate_serial_barnes_hut(std::vector<Particle>& particles, double total_time_steps, double time_step, size_t particle_count,
+void simulate_serial_barnes_hut(std::vector<Particle>& particles, float total_time_steps, float time_step, size_t particle_count,
  	size_t universe_size_x, size_t universe_size_y) {
 
 	int png_step_counter = 0;
@@ -63,7 +63,7 @@ void simulate_serial_barnes_hut(std::vector<Particle>& particles, double total_t
 	quad_tree = ParticleHandler::to_quad_tree(particles, universe_size_x, universe_size_y);
 
 	//quad_particle_tree->get_points_inside_box(qmin_particle, quad_tree->origin, results_quad_particle_tree);
-	for (double current_time_step = 0.0; current_time_step < total_time_steps; current_time_step += time_step) {
+	for (float current_time_step = 0.0; current_time_step < total_time_steps; current_time_step += time_step) {
 
 		std::vector<TreeParticle*> results_quad_particle_tree;
 		// Get all resulting particles
@@ -111,12 +111,12 @@ void simulate_serial_barnes_hut(std::vector<Particle>& particles, double total_t
 }
 
 // Advance the simulation using serial execution
-void simulate_serial(std::vector<Particle>& particles, double total_time_steps, double time_step, size_t particle_count,
+void simulate_serial(std::vector<Particle>& particles, float total_time_steps, float time_step, size_t particle_count,
 	size_t universe_size_x, size_t universe_size_y) {
 
 	// Do simulate
 	int png_step_counter = 0;
-	for (double current_time_step = 0.0; current_time_step < total_time_steps; current_time_step += time_step) {
+	for (float current_time_step = 0.0; current_time_step < total_time_steps; current_time_step += time_step) {
 
 		// Calculate all the applied forces as acceleration on every particle
 		for (size_t i = 0; i < particle_count; ++i) {
@@ -145,16 +145,16 @@ int main()
 {
 	// Get the default simulation values
 	int thread_count = DEFAULT_NUMBER_OF_THREADS;
-	double gravity = GRAVITATIONAL_CONSTANT;
+	float gravity = GRAVITATIONAL_CONSTANT;
 	size_t particle_count = DEFAULT_PARTICLE_COUNT;
-	double total_time_steps = DEFAULT_TOTAL_TIME_STEPS;
-	double time_step = TIME_STEP;
+	float total_time_steps = DEFAULT_TOTAL_TIME_STEPS;
+	float time_step = TIME_STEP;
 	size_t universe_size_x = UNIVERSE_SIZE_X;
 	size_t universe_size_y = UNIVERSE_SIZE_Y;
 
 	// TODO: User input data
 	particle_count = 40;
-	total_time_steps = 10;
+	total_time_steps = 10.0f;
 	universe_size_x = 800;
 	universe_size_y = 800;
 	thread_count = 4;
