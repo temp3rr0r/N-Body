@@ -67,12 +67,10 @@ void simulate_parallel_barnes_hut(tbb::concurrent_vector<Particle>& particles, f
 		// Insert the points in the quad tree
 		tbb::concurrent_vector<TreeParticle, tbb::cache_aligned_allocator<TreeParticle>> quad_tree_particles(particle_count);
 
-
 		parallel_for(tbb::blocked_range<size_t>(0, particle_count), // Get range for this thread
 			[&](const tbb::blocked_range<size_t>& r) {
 			for (size_t index = r.begin(); index != r.end(); ++index) { // Using index range
-				Particle current_particle = particles[index]; // Thread local variable
-				quad_tree_particles[index].set_particle(current_particle);
+				quad_tree_particles[index].set_particle(particles[index]);
 			}
 		}); // Implicit barrier
 
@@ -83,9 +81,8 @@ void simulate_parallel_barnes_hut(tbb::concurrent_vector<Particle>& particles, f
 
 		parallel_for(tbb::blocked_range<size_t>(0, particle_count),
 			[&](const tbb::blocked_range<size_t>& r) {
-			for (size_t index = r.begin(); index != r.end(); ++index) { // Using index range
-				Particle current_particle = particles[index]; // Thread local variable
-				atomic_quad_tree->apply_acceleration(current_particle);
+			for (size_t index = r.begin(); index != r.end(); ++index) { // Using index range				
+				atomic_quad_tree->apply_acceleration(particles[index]);
 			}
 		}); // Implicit barrier
 
@@ -95,6 +92,7 @@ void simulate_parallel_barnes_hut(tbb::concurrent_vector<Particle>& particles, f
 			for (size_t index = r.begin(); index != r.end(); ++index) { // Using index range
 				Particle current_particle = particles[index]; // Thread local variable
 				current_particle.advance(time_step);
+				std::swap(particles[index], current_particle);
 			}
 		}
 		); // Implicit barrier
@@ -234,7 +232,7 @@ int main()
 	size_t universe_size_y = UNIVERSE_SIZE_Y;
 
 	// TODO: User input data
-	particle_count = 3000;
+	particle_count = 300;
 	total_time_steps = 10.0f;
 	universe_size_x = 800;
 	universe_size_y = 800;

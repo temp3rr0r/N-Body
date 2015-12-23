@@ -25,5 +25,4 @@ public:
 	bool isLeafNode() const; // Check if it is a leaf
 	void insert(TreeParticle* point); // Insert point in the node
 	void apply_acceleration(Particle& input_particle) const;
-	void apply_acceleration_pairwise(Particle& input_particle) const;
 };
