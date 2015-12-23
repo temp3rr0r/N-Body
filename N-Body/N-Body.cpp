@@ -115,8 +115,8 @@ void simulate_serial_barnes_hut_sample(std::vector<Particle>& particles, float t
 
 	// Hardcode sizes for the sample
 	particle_count = 8;
-	universe_size_x = 100.0f;
-	universe_size_y = 100.0f;
+	universe_size_x = 100;
+	universe_size_y = 100;
 
 	int png_step_counter = 0;
 
@@ -159,7 +159,6 @@ void simulate_serial_barnes_hut(std::vector<Particle>& particles, float total_ti
 		
 	int png_step_counter = 0;
 	QuadParticleTree* quad_tree;
-
 
 	for (float current_time_step = 0.0; current_time_step < total_time_steps; current_time_step += time_step) {
 
@@ -224,7 +223,6 @@ int main()
 {
 	// Get the default simulation values
 	int thread_count = DEFAULT_NUMBER_OF_THREADS;
-	float gravity = GRAVITATIONAL_CONSTANT;
 	size_t particle_count = DEFAULT_PARTICLE_COUNT;
 	float total_time_steps = DEFAULT_TOTAL_TIME_STEPS;
 	float time_step = TIME_STEP;

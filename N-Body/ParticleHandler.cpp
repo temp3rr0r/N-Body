@@ -6,7 +6,6 @@
 #include "TreeParticle.h"
 #include "QuadParticleTree.h"
 
-
 // Generate random particles
 void ParticleHandler::allocate_random_particles(size_t particle_count, std::vector<Particle>& particles, size_t size_x, size_t size_y) {
 	if (particle_count > 0) {
@@ -24,9 +23,7 @@ void ParticleHandler::allocate_random_particles(size_t particle_count, std::vect
 
 std::vector<Particle> ParticleHandler::get_random_particles_Barns_Hut_sample() {
 	// Example of 8 fixed points
-
-	size_t sample_particle_count = 8; 
-	
+		
 	std::vector<Particle> particles; // ensure that the vector is clear
 
 	Particle a = Particle(20.0f, 78.0f, 1.0f);
