@@ -60,10 +60,9 @@ void simulate_parallel_barnes_hut(tbb::concurrent_vector<Particle>& particles, f
 
 	for (float current_time_step = 0.0; current_time_step < total_time_steps; current_time_step += time_step) {
 
-		// (Re)Allocate all the vector particles into the tree	
-		//Crate a new quad tree with limits from zero, up to grid size x and y
-		atomic_quad_tree = new QuadParticleTree(Particle(0.0f, 0.0f, 0.0f),
-			Particle(static_cast<float>(universe_size_x) * 2, static_cast<float>(universe_size_y) * 2, 0.0f));
+		// (Re)Allocate all the vector particles into the tree			
+		atomic_quad_tree = new QuadParticleTree(Particle(0.0f, 0.0f, 0.0f), //Crate a new quad tree with limits from zero, up to grid size x and y
+			Particle(static_cast<float>(universe_size_x) * 2, static_cast<float>(universe_size_y) * 2, 0.0f)); // x2 due to an issue on the tree min/max bounds
 
 		// Insert the points in the quad tree
 		TreeParticle *quad_tree_particles = new TreeParticle[particle_count];
@@ -75,14 +74,10 @@ void simulate_parallel_barnes_hut(tbb::concurrent_vector<Particle>& particles, f
 			}
 		}); // Implicit barrier
 
-		// Must be performed serially
+		// Must be performed serially. Parallel version requires lots of safe regions anyway
 		for (size_t i = 0; i < particle_count; ++i) {
 			atomic_quad_tree->insert(quad_tree_particles + i);
 		}
-
-		// Apply acceleration force to all the particles of the vector
-//		for (Particle& current_particle : particles)
-//			atomic_quad_tree->apply_acceleration(current_particle);
 
 		parallel_for(tbb::blocked_range<size_t>(0, particle_count), // Get range for this thread
 			[&](const tbb::blocked_range<size_t>& r) {
@@ -90,10 +85,6 @@ void simulate_parallel_barnes_hut(tbb::concurrent_vector<Particle>& particles, f
 				atomic_quad_tree->apply_acceleration(particles[index]);
 			}
 		}); // Implicit barrier
-
-		// Advance the particles in time
-//		for (Particle& current_particle : particles)
-//			current_particle.advance(time_step); // Advance the particle positions in time
 
 		 // Now that all the new accelerations were calculated, advance the particles in time
 		parallel_for(tbb::blocked_range<size_t>(0, particle_count), // Get range for this thread
