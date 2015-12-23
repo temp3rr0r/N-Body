@@ -138,7 +138,8 @@ void QuadParticleTree::apply_acceleration(Particle& input_particle) const {
 	// Start from root
 	if (isLeafNode()) {
 		Particle center_of_mass_particle = Particle(center_of_mass_x_, center_of_mass_y_, total_mass_);
-		input_particle.add_acceleration(center_of_mass_particle);	
+		if (input_particle.x_ != center_of_mass_particle.x_ && input_particle.y_ != center_of_mass_particle.y_ && input_particle.mass_ != total_mass_)
+			input_particle.add_acceleration(center_of_mass_particle);	
 	} else {
 		// Get distances	
 		Particle center_of_mass_particle = Particle(center_of_mass_x_, center_of_mass_y_, total_mass_);
@@ -146,7 +147,8 @@ void QuadParticleTree::apply_acceleration(Particle& input_particle) const {
 		float side = get_side_size();
 
 		if (side / distance_from_center_of_mass < THETA) {
-			input_particle.add_acceleration(center_of_mass_particle);
+			if (input_particle.x_ != center_of_mass_particle.x_ && input_particle.y_ != center_of_mass_particle.y_ && input_particle.mass_ != total_mass_)
+				input_particle.add_acceleration(center_of_mass_particle);
 		} else {
 			// Go deeper in the tree
 			int quadtrant = getQuadrantContainingPoint(input_particle);
