@@ -97,11 +97,13 @@ std::vector<Particle> ParticleHandler::to_vector(const tbb::concurrent_vector<Pa
 
 // Check if two particle collections contain exactly the same particles in terms of location, velocity, mass and acceleration
 bool ParticleHandler::are_equal(const std::vector<Particle>& first_particles, const std::vector<Particle>& second_particles) {
+	
 	bool are_equal = false;
 
 	if (first_particles.size() == second_particles.size()) {
 		are_equal = true;
 		for (size_t i = 0; i < first_particles.size(); ++i) {
+			// TODO: comparision should be within a floating point limit, not exact...
 			if (first_particles[i].velocity_x_ != second_particles[i].velocity_x_ || first_particles[i].velocity_y_ != second_particles[i].velocity_y_ ||
 				first_particles[i].x_ != second_particles[i].x_ || first_particles[i].y_ != second_particles[i].y_ ||
 				first_particles[i].acceleration_x_ != second_particles[i].acceleration_x_ ||
@@ -129,48 +131,4 @@ QuadParticleTree* ParticleHandler::to_quad_tree(const std::vector<Particle>& inp
 	}
 
 	return quad_particle_tree;
-}
-
-QuadParticleTree* ParticleHandler::to_quad_tree(tbb::concurrent_vector<Particle> input_particles, size_t size_x, size_t size_y) {
-
-	// Crate a new quad tree with limits from zero, up to grid size x and y
-	QuadParticleTree *quad_particle_tree = new QuadParticleTree(Particle(0.0f, 0.0f, 0.0f),
-		Particle(static_cast<float>(size_x), static_cast<float>(size_y), 0.0f));
-
-	// Insert the points in the quad tree
-	TreeParticle *quad_tree_particles = new TreeParticle[input_particles.size()];
-	for (size_t i = 0; i < input_particles.size(); ++i) {
-		quad_tree_particles[i].set_particle(input_particles[i]);
-		quad_particle_tree->insert(quad_tree_particles + i);
-	}
-
-	return quad_particle_tree;
-}
-
-QuadParticleTree* ParticleHandler::to_quad_tree(std::vector<TreeParticle*> quad_tree_particles, size_t size_x, size_t size_y) {
-	QuadParticleTree *quad_particle_tree = new QuadParticleTree(Particle(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0),
-	Particle(static_cast<float>(size_x), static_cast<float>(size_y), 0.0f, 0.0f, 0.0f, 0.0f, 0.0));
-
-	for (size_t i = 0; i < quad_tree_particles.size(); ++i) {
-		quad_particle_tree->insert(quad_tree_particles[i]);
-	}
-	return quad_particle_tree;
-}
-
-std::vector<Particle> ParticleHandler::to_vector(std::vector<TreeParticle*> quad_tree_particles, size_t size_x, size_t size_y) {
-	std::vector<Particle> returning_vector;
-
-	for (TreeParticle* tree_particle : quad_tree_particles)
-		returning_vector.push_back(tree_particle->get_particle());
-
-	return returning_vector;
-}
-
-std::vector<Particle> ParticleHandler::to_vector(const std::vector<TreeParticle> quad_tree_particles, size_t size_x, size_t size_y) {
-	std::vector<Particle> returning_vector;
-
-	for (TreeParticle tree_particle : quad_tree_particles)
-		returning_vector.push_back(tree_particle.get_particle());
-
-	return returning_vector;
 }

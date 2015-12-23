@@ -115,21 +115,21 @@ void Particle::advance(float time_step) {
 	x_ += velocity_x_ * time_step;
 	y_ += velocity_y_ * time_step;
 
-	// If out of grid limits, reverse direction and set valid position
+	// If out of grid limits, reverse direction and set valid position, "bounce"
 	if (x_ < 0) {
 		velocity_x_ *= -1;
-		x_ *= -1;
+		x_ = 0;
 	} else if (x_ > UNIVERSE_SIZE_X) {
 		velocity_x_ *= -1;
-		x_ -= UNIVERSE_SIZE_X;
+		x_ = UNIVERSE_SIZE_X;
 	}
 	
 	if (y_ < 0) {
 		velocity_y_ *= -1;
-		y_ *= -1;
+		y_ = 0;
 	} else if (y_ > UNIVERSE_SIZE_Y) {
 		velocity_y_ *= -1;
-		y_ -= UNIVERSE_SIZE_Y;
+		y_ = UNIVERSE_SIZE_Y;
 	}
 
 	// Reset accelerations
@@ -150,6 +150,6 @@ Particle Particle::operator-(const Particle& r) const {
 }
 
 // Multiply a particle by a scalar number
-Particle Particle::operator*(float r) const {
+Particle Particle::operator*(float r) const { // TODO: check if mass * r affects the total mass 
 	return Particle(x_ * r, y_ * r, velocity_x_ * r, velocity_y_ * r, mass_ * r, acceleration_x_ * r, acceleration_y_ * r);
 }

@@ -7,18 +7,11 @@ class TreeParticle {
 public:
 	TreeParticle() { }
 	TreeParticle(const Particle& input_particle) : particle_(input_particle) { }
+	
 	const Particle& get_particle() const {
 		return particle_;
 	}
-
-	void advance(float time_step) {
-		particle_.advance(time_step);
-	}
-
-	Particle get_particle() {
-		return particle_;
-	}
-
+	
 	void set_particle(const Particle& input_particle) {
 		particle_ = input_particle;
 	}
