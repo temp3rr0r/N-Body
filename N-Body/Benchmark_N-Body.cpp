@@ -1,4 +1,5 @@
 #include <ctime>
+#include <sstream>
 #include "Settings.h"
 #include "Particle.h"
 #include "Particle.cpp"
@@ -238,14 +239,15 @@ int main(int argc, char * argv[]) {
 	size_t universe_size_y = UNIVERSE_SIZE_Y;
 	
 	// Benchmark settings
-	size_t benchmark_init_particle_count = 10;	
-	size_t benchmark_particle_count_multiplier = 10;
-	size_t benchmark_max_particle_count = 1000 * 1000;	
-	float benchmark_init_total_timesteps = 0.01f;
-	float benchmark_max_total_timesteps = 10.0f;		
 	int benchmark_init_thread_count = 1;
 	int benchmark_max_thread_count = 4;
 	size_t benchmark_repeat_count = 4;
+	size_t benchmark_init_particle_count = 10;	
+	size_t benchmark_particle_count_multiplier = 10;	
+	size_t benchmark_max_particle_count = 10000;//1000 * 1000;
+	
+	float benchmark_init_total_timesteps = 0.01f;
+	float benchmark_max_total_timesteps = 10.0f;		
 	
 	// Default runtime settings
 	std::string execution_type = "serial";
@@ -343,113 +345,96 @@ int main(int argc, char * argv[]) {
 		benchmark_string_stream << "execution_time,execution_type,thread_count,particle_count,total_timesteps,timestep,repeat_count" << std::endl;
 		
 		tbb::tick_count before, after; // Execution timers
-		
-		/*		
-		//size_t benchmark_init_particle_count = 10;
-		//size_t benchmark_particle_count_multiplier = 10;
-		/size_t benchmark_max_particle_count = 1000 * 1000;
-		//int benchmark_init_thread_count = 1;
-		//int benchmark_max_thread_count = 4;
-		size_t benchmark_repeat_count = 4;
-		-float benchmark_init_total_timesteps = 0.01f;	
-		-float benchmark_particle_count_multiplier = 10.0f;
-		-float benchmark_max_total_timesteps = 100.0f;		
 
-		*/
-		
+		std::cout << "." << std::endl;
+
+			
 		for (int current_thread_count = benchmark_init_thread_count; current_thread_count <= benchmark_max_thread_count; current_thread_count++) {
+	
+			tbb::task_scheduler_init init(current_thread_count); // Set the number of threads on the TBB scheduler		
+		
+			for (size_t benchmark_particle_count = benchmark_init_particle_count; benchmark_particle_count <= benchmark_max_particle_count; 
+					benchmark_particle_count *= benchmark_particle_count_multiplier) {		
 
-			tbb::task_scheduler_init init(current_thread_count); // Set the number of threads on the TBB scheduler
-
-			for (size_t benchmark_particle_count = benchmark_init_particle_count; benchmark_particle_count < benchmark_max_particle_count; 
-				benchmark_particle_count*=benchmark_particle_count_multiplier) {
-					
 				// Initialize particle container
 				std::vector<Particle> particles;
 
-				// Put random particles
+				// Put random particles in the original container
 				ParticleHandler::allocate_random_particles(particle_count, particles, universe_size_x, universe_size_y);
 
 				// Simulate
-
-				// Copy the particle universes into the serial and parallel execution containers
-				tbb::concurrent_vector<Particle, tbb::cache_aligned_allocator<Particle>> particles_tbb(ParticleHandler::to_concurrent_vector(particles));
-				std::vector<Particle> particles_serial_barnes_hut(particles);
-				tbb::concurrent_vector<Particle, tbb::cache_aligned_allocator<Particle>> particles_parallel_barnes_hut(ParticleHandler::to_concurrent_vector(particles));
-
+				
+				float total_time_steps_benchmark = total_time_steps;
+				float time_step_benchmark = time_step;
+						
+				
 				// Benchmark the Serial execution
 				execution_type = "serial";
-				double average_execution_time = 0.0;
+				float average_execution_time = 0.0f;
 				for (size_t current_repeat_count = 0; current_repeat_count < benchmark_repeat_count; current_repeat_count++) {
 					std::vector<Particle> particles_serial(particles);
 					before = tbb::tick_count::now();
 					simulate_serial(particles_serial, total_time_steps, time_step, particle_count, universe_size_x, universe_size_y); // Advance Simulation serially
 					after = tbb::tick_count::now();
-					average_execution_time += (after - before).seconds();
+					average_execution_time += (1000.0 * (after - before).seconds());
+					particles_serial.clear();
+					std::cout << "." ;
+					
 				}
-				average_execution_time /= (1000.0 * benchmark_repeat_count);
-				//benchmark_string += "execution_time,execution_type,thread_count,particle_count,total_timesteps,timestep,repeat_count\n";
-				benchmark_string_stream << average_execution_time << "," << execution_type << "," << current_thread_count << "," << benchmark_particle_count << ","
-					<< total_timesteps << "," << timestep << "," << benchmark_repeat_count << std::endl;
+				average_execution_time /= benchmark_repeat_count;
+				benchmark_string_stream << average_execution_time << "," << execution_type << "," << current_thread_count << "," << benchmark_particle_count
+					<< ","  << total_time_steps_benchmark << ","  << time_step_benchmark << "," << benchmark_repeat_count << std::endl;
 
 				// Barnes Serial execution
-				before = tbb::tick_count::now();
-				simulate_serial_barnes_hut(particles_serial_barnes_hut, total_time_steps, time_step, particle_count, universe_size_x, universe_size_y); // Advance Simulation serially
-				after = tbb::tick_count::now();
-				std::cout << 1000 * (after - before).seconds() << " ms" << std::endl;
+				execution_type = "barnes_serial";
+				average_execution_time = 0.0f;
+				for (size_t current_repeat_count = 0; current_repeat_count < benchmark_repeat_count; current_repeat_count++) {
+					std::vector<Particle> particles_serial_barnes_hut(particles);
+					before = tbb::tick_count::now();
+					simulate_serial_barnes_hut(particles_serial_barnes_hut, total_time_steps, time_step, particle_count, universe_size_x, universe_size_y); // Advance Simulation serially
+					after = tbb::tick_count::now();
+					average_execution_time += (1000.0 * (after - before).seconds());
+					particles_serial_barnes_hut.clear();
+					std::cout << "." ;
+				}
+				average_execution_time /= benchmark_repeat_count;
+				benchmark_string_stream << average_execution_time << "," << execution_type << "," << current_thread_count << "," << benchmark_particle_count
+					<< ","  << total_time_steps_benchmark << ","  << time_step_benchmark << "," << benchmark_repeat_count << std::endl;
 				
 				// Barnes Parallel execution
-				before = tbb::tick_count::now();
-				simulate_parallel_barnes_hut(particles_parallel_barnes_hut, total_time_steps, time_step, particle_count, universe_size_x, universe_size_y); // Advance Simulation with TBB
-				after = tbb::tick_count::now();
-				std::cout << 1000 * (after - before).seconds() << " ms" << std::endl;
+				execution_type = "barnes_parallel";
+				average_execution_time = 0.0f;
+				for (size_t current_repeat_count = 0; current_repeat_count < benchmark_repeat_count; current_repeat_count++) {					
+					tbb::concurrent_vector<Particle, tbb::cache_aligned_allocator<Particle>> particles_parallel_barnes_hut(ParticleHandler::to_concurrent_vector(particles));					
+					before = tbb::tick_count::now();
+					simulate_parallel_barnes_hut(particles_parallel_barnes_hut, total_time_steps, time_step, particle_count, universe_size_x, universe_size_y); // Advance Simulation with TBB
+					after = tbb::tick_count::now();
+					average_execution_time += (1000.0 * (after - before).seconds());
+					particles_parallel_barnes_hut.clear();
+					std::cout << "." ;
+				}
+				average_execution_time /= benchmark_repeat_count;
+				benchmark_string_stream << average_execution_time << "," << execution_type << "," << current_thread_count << "," << benchmark_particle_count
+					<< ","  << total_time_steps_benchmark << ","  << time_step_benchmark << "," << benchmark_repeat_count << std::endl;
 				
-				// Benchmark the Thread Building Blocks execution
-				before = tbb::tick_count::now();
-				simulate_tbb(particles_tbb, total_time_steps, time_step, particle_count, universe_size_x, universe_size_y); // Advance Simulation with TBB
-				after = tbb::tick_count::now();
-				std::cout << 1000 * (after - before).seconds() << " ms" << std::endl;
-						
-				// Assert the count of the particles
-				assert(particles_serial.size() == particle_count);		
-				assert(particles_tbb.size() == particle_count);
-				assert(particles_serial_barnes_hut.size() == particle_count);
-				assert(particles_parallel_barnes_hut.size() == particle_count);
-				
-				// Assert the total weight of the particles	hasn't changed
-				float init_total_mass = 0.0f;
-				float mass_difference_tolerance = 1.0f;
-				for (const Particle& current_particle : particles)
-					init_total_mass += current_particle.mass_;
-				
-				float serial_mass = 0.0f;
-				for (const Particle& current_particle : particles_serial)
-					serial_mass += current_particle.mass_;			
-				
-				float tbb_mass = 0.0f;
-				for (const Particle& current_particle : particles_tbb)
-					tbb_mass += current_particle.mass_;
-					
-				float barnes_hut_mass = 0.0f;
-				for (const Particle& current_particle : particles_serial_barnes_hut)
-					barnes_hut_mass += current_particle.mass_;
-					
-				float parallel_barnes_hut_mass = 0.0f;
-				for (const Particle& current_particle : particles_parallel_barnes_hut)
-					parallel_barnes_hut_mass += current_particle.mass_;		
-				
-				assert(fabs(init_total_mass - serial_mass) < mass_difference_tolerance);
-				assert(fabs(init_total_mass - tbb_mass) < mass_difference_tolerance);
-				assert(fabs(init_total_mass - barnes_hut_mass) < mass_difference_tolerance);
-				assert(fabs(init_total_mass - parallel_barnes_hut_mass) < mass_difference_tolerance);
-				
-				// Assert that the serial and the results are similar
-				assert(ParticleHandler::are_equal(particles_serial, ParticleHandler::to_vector(particles_tbb),
-					((total_time_steps / time_step > 1000.0) ? 10.0 : 1.0))); // compare serial with parallel tbb
-				assert(ParticleHandler::are_equal(particles_serial_barnes_hut, ParticleHandler::to_vector(particles_parallel_barnes_hut),
-					((total_time_steps / time_step > 1000.0) ? 10.0 : 1.0))); // compare serial-parallel barnes-hut
-				
+				// Benchmark the Thread Building Blocks execution				
+				execution_type = "tbb_parallel";
+				average_execution_time = 0.0f;
+				for (size_t current_repeat_count = 0; current_repeat_count < benchmark_repeat_count; current_repeat_count++) {
+					tbb::concurrent_vector<Particle, tbb::cache_aligned_allocator<Particle>> particles_tbb(ParticleHandler::to_concurrent_vector(particles));
+					before = tbb::tick_count::now();
+					simulate_tbb(particles_tbb, total_time_steps, time_step, particle_count, universe_size_x, universe_size_y); // Advance Simulation with TBB
+					after = tbb::tick_count::now();
+					average_execution_time += (1000.0 * (after - before).seconds());
+					particles_tbb.clear();
+					std::cout << "." ;
+				}
+				average_execution_time /= benchmark_repeat_count;
+				benchmark_string_stream << average_execution_time << "," << execution_type << "," << current_thread_count << "," << benchmark_particle_count
+					<< ","  << total_time_steps_benchmark << ","  << time_step_benchmark << "," << benchmark_repeat_count << std::endl;			
 			}
+		}
+		
 		std::cout << "Writing results to csv: " << benchmark_file_name << endl;
 		
 		ofstream output_benchmark_csv;

@@ -5,7 +5,7 @@ benchmark:
 run:
 	./nbody
 clean:
-	rm *.png
-	rm *.csv
-	rm nbody
-	rm benchmarknbody
+	find . -name "nbody" -exec rm -rf {} \;
+	find . -name "benchmarknbody" -exec rm -rf {} \;
+	find . -name "*.png" -exec rm -rf {} \;
+	find . -name "*.csv" -exec rm -rf {} \;
