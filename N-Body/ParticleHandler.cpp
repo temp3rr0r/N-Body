@@ -51,13 +51,15 @@ std::vector<Particle> ParticleHandler::get_random_particles_Barns_Hut_sample() {
 
 // Generate an image from the given particle collection
 void ParticleHandler::universe_to_png(const std::vector<Particle>& universe, size_t universe_size_x, size_t universe_size_y, const char* filename) {
+	
 	ImageRGB output_image;
+	
 	output_image.width = universe_size_y;
 	output_image.height = universe_size_x;
 	
 	// Paint all black
-	for (size_t x = 0; x != output_image.height; ++x) {
-		for (size_t y = 0; y != output_image.width; ++y) {
+	for (size_t x = 0; x < output_image.height; ++x) {
+		for (size_t y = 0; y < output_image.width; ++y) {
 			output_image.data.push_back({0, 0, 0});
 		}
 	}
@@ -96,22 +98,7 @@ float ParticleHandler::get_comparison_tolerance(float first_float, float second_
 // Check if two particle collections contain exactly the same particles in terms of location, velocity, mass and acceleration
 bool ParticleHandler::are_equal(const std::vector<Particle>& first_particles, const std::vector<Particle>& second_particles) {
 	
-	bool are_equal = false;
-	float position_tolerance = 100.0f;
-	float mass_tolerance = 0.01f;
-
-	if (first_particles.size() == second_particles.size()) {
-		are_equal = true;
-		for (size_t i = 0; i < first_particles.size(); ++i) {
-			if (get_comparison_tolerance(first_particles[i].x_, second_particles[i].x_) > position_tolerance ||
-				get_comparison_tolerance(first_particles[i].y_, second_particles[i].y_) > position_tolerance ||				
-				get_comparison_tolerance(first_particles[i].mass_, second_particles[i].mass_) > mass_tolerance) {
-				std::cout << "Tolerance[" << i <<"]: " << get_comparison_tolerance(first_particles[i].mass_, second_particles[i].mass_) << std::endl;
-				return false;
-			}
-		}
-	}	
-	return are_equal;
+	return are_equal(first_particles, second_particles, 1.0f);
 }
 
 bool ParticleHandler::are_equal(const std::vector<Particle>& first_particles, const std::vector<Particle>& second_particles, float tolerance_multiplier) {
@@ -119,12 +106,15 @@ bool ParticleHandler::are_equal(const std::vector<Particle>& first_particles, co
 	bool are_equal = false;
 	float position_tolerance = 100.0f * tolerance_multiplier;
 	float mass_tolerance = 0.01f * tolerance_multiplier;
+	float velocity_tolerance = 100.0f * tolerance_multiplier;
 
 	if (first_particles.size() == second_particles.size()) {
 		are_equal = true;
 		for (size_t i = 0; i < first_particles.size(); ++i) {
 			if (get_comparison_tolerance(first_particles[i].x_, second_particles[i].x_) > position_tolerance ||
-				get_comparison_tolerance(first_particles[i].y_, second_particles[i].y_) > position_tolerance ||				
+				get_comparison_tolerance(first_particles[i].y_, second_particles[i].y_) > position_tolerance ||
+				get_comparison_tolerance(first_particles[i].velocity_x_, second_particles[i].velocity_x_) > position_tolerance ||
+				get_comparison_tolerance(first_particles[i].velocity_y_, second_particles[i].velocity_y_) > position_tolerance ||				
 				get_comparison_tolerance(first_particles[i].mass_, second_particles[i].mass_) > mass_tolerance) {
 				std::cout << "Tolerance[" << i <<"]: " << get_comparison_tolerance(first_particles[i].mass_, second_particles[i].mass_) << std::endl;
 				return false;

@@ -38,9 +38,11 @@ void simulate_tbb(tbb::concurrent_vector<Particle>& particles, float total_time_
 
 		// Now that all the new accelerations were calculated, advance the particles in time
 		parallel_for(tbb::blocked_range<size_t>(0, particle_count), // Get range for this thread
-			[&](const tbb::blocked_range<size_t>& r) {  
+			[&](const tbb::blocked_range<size_t>& r) {
+				size_t local_universe_size_x = universe_size_x;				
+				size_t local_universe_size_y = universe_size_y;				
 				for (size_t index = r.begin(); index != r.end(); ++index) { // Using index range
-					particles[index].advance(time_step);
+					particles[index].advance(time_step, local_universe_size_x, local_universe_size_y);
 				}
 			}
 		);
@@ -93,11 +95,13 @@ void simulate_parallel_barnes_hut(tbb::concurrent_vector<Particle>& particles, f
 		 // Now that all the new accelerations were calculated, advance the particles in time
 		parallel_for(tbb::blocked_range<size_t>(0, particle_count), // Get range for this thread
 			[&](const tbb::blocked_range<size_t>& r) {
-			for (size_t index = r.begin(); index != r.end(); ++index) { // Using index range
-				Particle current_particle = particles[index]; // Thread local variable
-				current_particle.advance(time_step);
-				std::swap(particles[index], current_particle);
-			}
+				size_t local_universe_size_x = universe_size_x;				
+				size_t local_universe_size_y = universe_size_y;
+				for (size_t index = r.begin(); index != r.end(); ++index) { // Using index range
+					Particle current_particle = particles[index]; // Thread local variable
+					current_particle.advance(time_step, local_universe_size_x, local_universe_size_y);
+					std::swap(particles[index], current_particle);
+				}
 		}
 		); // Implicit barrier
 
@@ -142,7 +146,7 @@ void simulate_serial_barnes_hut_sample(std::vector<Particle>& particles, float t
 
 		// Advance the particles in time
 		for (Particle& current_particle : particles_local)
-			current_particle.advance(time_step); // Advance the particle positions in time
+			current_particle.advance(time_step, universe_size_x, universe_size_y); // Advance the particle positions in time
 
 		// Recursively de-allocate the tree
 		delete quad_tree;
@@ -175,7 +179,7 @@ void simulate_serial_barnes_hut(std::vector<Particle>& particles, float total_ti
 
 		// Advance the particles in time
 		for (Particle& current_particle : particles)
-			current_particle.advance(time_step); // Advance the particle positions in time
+			current_particle.advance(time_step, universe_size_x, universe_size_y); // Advance the particle positions in time
 
 		// Recursively de-allocate the tree
 		delete quad_tree;
@@ -208,7 +212,7 @@ void simulate_serial(std::vector<Particle>& particles, float total_time_steps, f
 		}
 
 		for (Particle& current_particle : particles)
-			current_particle.advance(time_step); // Advance the particle posiitions in time
+			current_particle.advance(time_step, universe_size_x, universe_size_y); // Advance the particle posiitions in time
 
 		++png_step_counter;
 		if (SAVE_INTERMEDIATE_PNG_STEPS && SAVE_PNG && png_step_counter >= SAVE_PNG_EVERY) { // Save the intermediate step as png
@@ -232,17 +236,22 @@ int main(int argc, char * argv[]) {
 	size_t universe_size_x = UNIVERSE_SIZE_X;
 	size_t universe_size_y = UNIVERSE_SIZE_Y;
 
-	// Default settings
-	particle_count = 30;
-	total_time_steps = 10.0f;
+	// Default runtime settings
+	particle_count = 1000;
+	total_time_steps = 1.0f;
 	universe_size_x = 800;
-	universe_size_y = 800;
+	universe_size_y = 600;
 	thread_count = 4;
 
-	// TODO: Command line arguments
 	if (argc > 13 || argc % 2 == 0) {
-		std::cout << "USAGE: " + string(argv[0]) + "\n -particles x\n -totaltimesteps x\n -threads x\n -timestep x\n" 
-			<< " -universe_size_x x\n -universe_size_y x\n" << endl;
+		std::cout << "USAGE:\n" + string(argv[0]) + "\n" 
+			<< "OPTIONS:\n --particles x\n --totaltimesteps x\n --threads x\n --timestep x\n" 
+			<< " --universe_size_x x\n --universe_size_y x\n --help\n"
+			<< "EXAMPLES:" << std::endl
+			<< string(argv[0]) << " --threads 2" << std::endl
+			<< string(argv[0]) << " --threads 1" << " --particles 30" << std::endl
+			<< string(argv[0]) << " --threads 4" << " --particles 1000" << " --universe_size_x 1200" << " --universe_size_y 1600"
+				<< " --totaltimesteps 1.0" << " --timestep 0.2" << std::endl;
 		return 1;
 	}
 		
@@ -252,26 +261,26 @@ int main(int argc, char * argv[]) {
 				std::string variable = argv[i];
 				std::string value = argv[i + 1];
 				
-				if (variable.compare("-particles") == 0) {
+				if (variable.compare("--particles") == 0) {
 					particle_count = std::stoll(value);
 				}
-				else if (variable.compare("-totaltimesteps") == 0) {
+				else if (variable.compare("--totaltimesteps") == 0) {
 					total_time_steps = std::stof(value);
 				}
-				else if (variable.compare("-threads") == 0) {
+				else if (variable.compare("--threads") == 0) {
 					thread_count = std::stoi(value);
 				}
-				else if (variable.compare("-timestep") == 0) {
+				else if (variable.compare("--timestep") == 0) {
 					time_step = std::stof(value);
 				}
-				else if (variable.compare("-universe_size_x") == 0) {
+				else if (variable.compare("--universe_size_x") == 0) {
 					universe_size_x = std::stoll(value);
 				}
-				else if (variable.compare("-universe_size_y") == 0) {
+				else if (variable.compare("--universe_size_y") == 0) {
 					universe_size_y = std::stoll(value);
 				}
 				else {
-					std::cout << variable << " unknown variable" << endl;
+					std::cout << variable << ": unknown variable" << endl;
 					return 1;
 				}
 			}		
@@ -316,11 +325,11 @@ int main(int argc, char * argv[]) {
 	if (total_time_steps > 0.0 && particle_count > 0 && universe_size_x > 0 && universe_size_y > 0) {
 		
 		// Print calculation info
-		std::cout << "= Parallel N-Body simulation serially and with Thread Building Blocks =" << std::endl;
+		std::cout << "----- Parallel N-Body Simulation -----" << std::endl;
 		std::cout << "Number of threads: " << thread_count << std::endl;
 		std::cout << "Total time steps: " << total_time_steps << std::endl;
 		std::cout << "Time step: " << time_step << std::endl;
-		std::cout << "Particle count: " << particle_count << std::endl << std::endl;
+		std::cout << "Particle count: " << particle_count << std::endl;
 		std::cout << "Universe Size: " << universe_size_x << " x " << universe_size_y << std::endl << std::endl;
 
 		tbb::tick_count before, after; // Execution timers
@@ -413,6 +422,7 @@ int main(int argc, char * argv[]) {
 
 		if (SAVE_PNG) { // Save final universes to png
 			ParticleHandler::universe_to_png(particles, universe_size_x, universe_size_y, "init_universe.png");
+			
 			ParticleHandler::universe_to_png(particles_serial, universe_size_x, universe_size_y, "final_serial_universe.png");
 			ParticleHandler::universe_to_png(particles_serial_barnes_hut, universe_size_x, universe_size_y, "final_serial_universe_barnes_hut.png");
 			ParticleHandler::universe_to_png(ParticleHandler::to_vector(particles_parallel_barnes_hut), universe_size_x, universe_size_y, "final_parallel_universe_barnes_hut.png");

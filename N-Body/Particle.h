@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdlib>
+
 // Class that stores information for every particle
 class Particle {
 public:
@@ -39,6 +41,7 @@ public:
 	float get_distance(const Particle& second_particle) const;
 	void add_acceleration(float total_mass, float center_of_mass_x, float center_of_mass_y);
 	void add_acceleration(const Particle& interacting_particle);
+	void advance(float time_stamp, size_t universe_size_x, size_t universe_size_y);
 	void advance(float time_stamp);
 	Particle operator+(const Particle& r) const;
 	Particle operator-(const Particle& r) const;

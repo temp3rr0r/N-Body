@@ -104,8 +104,14 @@ void Particle::add_acceleration(const Particle& interacting_particle) {
 	acceleration_y_ -= acceleration_factor * velocity_y_;
 }
 
+
 // Moves the current particle for a specific time
 void Particle::advance(float time_step) {
+	advance(time_step, UNIVERSE_SIZE_X, UNIVERSE_SIZE_Y);
+}
+
+// Moves the current particle for a specific time
+void Particle::advance(float time_step, size_t universe_size_x, size_t universe_size_y) {
 
 	// Add accelerations on velocities
 	velocity_x_ += time_step * acceleration_x_;
@@ -119,17 +125,17 @@ void Particle::advance(float time_step) {
 	if (x_ < 0) {
 		velocity_x_ *= -1;
 		x_ = 0;
-	} else if (x_ > UNIVERSE_SIZE_X) {
+	} else if (x_ > universe_size_x) {
 		velocity_x_ *= -1;
-		x_ = UNIVERSE_SIZE_X;
+		x_ = universe_size_x;
 	}
 	
 	if (y_ < 0) {
 		velocity_y_ *= -1;
 		y_ = 0;
-	} else if (y_ > UNIVERSE_SIZE_Y) {
+	} else if (y_ > universe_size_y) {
 		velocity_y_ *= -1;
-		y_ = UNIVERSE_SIZE_Y;
+		y_ = universe_size_y;
 	}
 
 	// Reset accelerations

@@ -1,7 +1,5 @@
 #pragma once
 #include <cstdint>
-//#include <stdbool.h>
-//#include <stdint.h>
 
 // Default N-Body simulation settings
 
