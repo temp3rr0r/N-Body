@@ -22,7 +22,6 @@ void simulate_tbb(tbb::concurrent_vector<Particle>& particles, float total_time_
 	size_t universe_size_x, size_t universe_size_y) {
 
 	// Do Simulate
-	int png_step_counter = 0;
 	for (float current_time_step = 0.0; current_time_step < total_time_steps; current_time_step += time_step) {
 
 		parallel_for(tbb::blocked_range<size_t>(0, particle_count), // Get the range for this thread
@@ -48,22 +47,12 @@ void simulate_tbb(tbb::concurrent_vector<Particle>& particles, float total_time_
 				}
 			}
 		);
-
-		++png_step_counter;
-		if (SAVE_INTERMEDIATE_PNG_STEPS && SAVE_PNG && png_step_counter >= SAVE_PNG_EVERY) { // Save the intermediate step as png
-			png_step_counter = 0;
-
-			std::string file_name = "universe_tbb_timestep_" + std::to_string(current_time_step) + ".png";
-
-			ParticleHandler::universe_to_png(ParticleHandler::to_vector(particles), universe_size_x, universe_size_y, file_name.c_str());
-		}
 	}
 }
 
 void simulate_parallel_barnes_hut(tbb::concurrent_vector<Particle>& particles, float total_time_steps, float time_step, size_t particle_count,
 	size_t universe_size_x, size_t universe_size_y) {
 
-	int png_step_counter = 0;
 	tbb::atomic<QuadParticleTree*> atomic_quad_tree;
 
 	for (float current_time_step = 0.0; current_time_step < total_time_steps; current_time_step += time_step) {
@@ -109,15 +98,6 @@ void simulate_parallel_barnes_hut(tbb::concurrent_vector<Particle>& particles, f
 
 		// Recursively de-allocate the tree
 		delete atomic_quad_tree;
-
-		++png_step_counter;
-		if (SAVE_INTERMEDIATE_PNG_STEPS && SAVE_PNG && png_step_counter >= SAVE_PNG_EVERY) {
-
-			png_step_counter = 0;
-			std::string file_name = "universe_serial_barnes_hut_timestep_" + std::to_string(current_time_step) + ".png";
-
-			ParticleHandler::universe_to_png(ParticleHandler::to_vector(particles), universe_size_x, universe_size_y, file_name.c_str());
-		}
 	}
 }
 
@@ -128,8 +108,6 @@ void simulate_serial_barnes_hut_sample(std::vector<Particle>& particles, float t
 	particle_count = 8;
 	universe_size_x = 100;
 	universe_size_y = 100;
-
-	int png_step_counter = 0;
 
 	QuadParticleTree* quad_tree;	
 	
@@ -152,22 +130,12 @@ void simulate_serial_barnes_hut_sample(std::vector<Particle>& particles, float t
 
 		// Recursively de-allocate the tree
 		delete quad_tree;
-
-		++png_step_counter;
-		if (SAVE_INTERMEDIATE_PNG_STEPS && SAVE_PNG && png_step_counter >= SAVE_PNG_EVERY) {
-
-			png_step_counter = 0;
-			std::string file_name = "universe_serial_barnes_hut_timestep_" + std::to_string(current_time_step) + ".png";
-
-			ParticleHandler::universe_to_png(particles, universe_size_x, universe_size_y, file_name.c_str());
-		}
 	}
 }
 
 void simulate_serial_barnes_hut(std::vector<Particle>& particles, float total_time_steps, float time_step, size_t particle_count,
  	size_t universe_size_x, size_t universe_size_y) {
 		
-	int png_step_counter = 0;
 	QuadParticleTree* quad_tree;
 
 	for (float current_time_step = 0.0; current_time_step < total_time_steps; current_time_step += time_step) {
@@ -185,15 +153,6 @@ void simulate_serial_barnes_hut(std::vector<Particle>& particles, float total_ti
 
 		// Recursively de-allocate the tree
 		delete quad_tree;
-
-		++png_step_counter;
-		if (SAVE_INTERMEDIATE_PNG_STEPS && SAVE_PNG && png_step_counter >= SAVE_PNG_EVERY) {
-
-			png_step_counter = 0;
-			std::string file_name = "universe_serial_barnes_hut_timestep_" + std::to_string(current_time_step) + ".png";
-
-			ParticleHandler::universe_to_png(particles, universe_size_x, universe_size_y, file_name.c_str());
-		}
 	}
 }
 
@@ -202,7 +161,6 @@ void simulate_serial(std::vector<Particle>& particles, float total_time_steps, f
 	size_t universe_size_x, size_t universe_size_y) {
 
 	// Do simulate
-	int png_step_counter = 0;
 	for (float current_time_step = 0.0; current_time_step < total_time_steps; current_time_step += time_step) {
 
 		// Calculate all the applied forces as acceleration on every particle
@@ -215,15 +173,6 @@ void simulate_serial(std::vector<Particle>& particles, float total_time_steps, f
 
 		for (Particle& current_particle : particles)
 			current_particle.advance(time_step, universe_size_x, universe_size_y); // Advance the particle posiitions in time
-
-		++png_step_counter;
-		if (SAVE_INTERMEDIATE_PNG_STEPS && SAVE_PNG && png_step_counter >= SAVE_PNG_EVERY) { // Save the intermediate step as png
-		
-			png_step_counter = 0;
-			std::string file_name = "universe_serial_timestep_" + std::to_string(current_time_step) + ".png";
-
-			ParticleHandler::universe_to_png(particles, universe_size_x, universe_size_y, file_name.c_str());
-		}
 	}
 }
 
@@ -241,13 +190,15 @@ int main(int argc, char * argv[]) {
 	// Benchmark settings
 	int benchmark_init_thread_count = 1;
 	int benchmark_max_thread_count = 4;
+	
 	size_t benchmark_repeat_count = 4;
+	
 	size_t benchmark_init_particle_count = 10;	
 	size_t benchmark_particle_count_multiplier = 10;	
-	size_t benchmark_max_particle_count = 10000;//1000 * 1000;
+	size_t benchmark_max_particle_count = 1000;//1000 * 1000;
 	
 	float benchmark_init_total_timesteps = 0.01f;
-	float benchmark_max_total_timesteps = 10.0f;		
+	float benchmark_max_total_timesteps = 1.0f;
 	
 	// Default runtime settings
 	std::string execution_type = "serial";
@@ -346,8 +297,7 @@ int main(int argc, char * argv[]) {
 		
 		tbb::tick_count before, after; // Execution timers
 
-		std::cout << "." << std::endl;
-
+		std::cout << "Running..." << std::flush;
 			
 		for (int current_thread_count = benchmark_init_thread_count; current_thread_count <= benchmark_max_thread_count; current_thread_count++) {
 	
@@ -360,7 +310,7 @@ int main(int argc, char * argv[]) {
 				std::vector<Particle> particles;
 
 				// Put random particles in the original container
-				ParticleHandler::allocate_random_particles(particle_count, particles, universe_size_x, universe_size_y);
+				ParticleHandler::allocate_random_particles(benchmark_particle_count, particles, universe_size_x, universe_size_y);
 
 				// Simulate
 				
@@ -378,7 +328,7 @@ int main(int argc, char * argv[]) {
 					after = tbb::tick_count::now();
 					average_execution_time += (1000.0 * (after - before).seconds());
 					particles_serial.clear();
-					std::cout << "." ;
+					std::cout << "."  << std::flush;
 					
 				}
 				average_execution_time /= benchmark_repeat_count;
@@ -395,7 +345,7 @@ int main(int argc, char * argv[]) {
 					after = tbb::tick_count::now();
 					average_execution_time += (1000.0 * (after - before).seconds());
 					particles_serial_barnes_hut.clear();
-					std::cout << "." ;
+					std::cout << "."  << std::flush;
 				}
 				average_execution_time /= benchmark_repeat_count;
 				benchmark_string_stream << average_execution_time << "," << execution_type << "," << current_thread_count << "," << benchmark_particle_count
@@ -411,7 +361,7 @@ int main(int argc, char * argv[]) {
 					after = tbb::tick_count::now();
 					average_execution_time += (1000.0 * (after - before).seconds());
 					particles_parallel_barnes_hut.clear();
-					std::cout << "." ;
+					std::cout << "."  << std::flush;
 				}
 				average_execution_time /= benchmark_repeat_count;
 				benchmark_string_stream << average_execution_time << "," << execution_type << "," << current_thread_count << "," << benchmark_particle_count
@@ -427,7 +377,7 @@ int main(int argc, char * argv[]) {
 					after = tbb::tick_count::now();
 					average_execution_time += (1000.0 * (after - before).seconds());
 					particles_tbb.clear();
-					std::cout << "." ;
+					std::cout << "."  << std::flush;
 				}
 				average_execution_time /= benchmark_repeat_count;
 				benchmark_string_stream << average_execution_time << "," << execution_type << "," << current_thread_count << "," << benchmark_particle_count
