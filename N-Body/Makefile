@@ -4,4 +4,5 @@ run:
 	./nbody
 clean:
 	rm *.png
+	rm *.csv
 	rm nbody

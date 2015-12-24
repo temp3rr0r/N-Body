@@ -236,6 +236,7 @@ int main(int argc, char * argv[]) {
 	size_t universe_size_x = UNIVERSE_SIZE_X;
 	size_t universe_size_y = UNIVERSE_SIZE_Y;
 	bool save_csv = SAVE_CSV;
+	bool save_png = SAVE_PNG;
 
 	// Default runtime settings
 	particle_count = 1000;
@@ -244,10 +245,10 @@ int main(int argc, char * argv[]) {
 	universe_size_y = 600;
 	thread_count = 4;
 
-	if (argc > 15 || argc % 2 == 0) {
+	if (argc > 17 || argc % 2 == 0) {
 		std::cout << "USAGE:\n" + string(argv[0]) + "\n" 
 			<< "OPTIONS:\n --particles x\n --totaltimesteps x\n --threads x\n --timestep x\n" 
-			<< " --universe_size_x x\n --universe_size_y x\n --csv 0/1\n --help\n"
+			<< " --universe_size_x x\n --universe_size_y x\n --csv 0/1\n --png 0/1\n --help\n"
 			<< "EXAMPLES:" << std::endl
 			<< string(argv[0]) << " --threads 2" << std::endl
 			<< string(argv[0]) << " --threads 1" << " --particles 30" << std::endl
@@ -283,6 +284,14 @@ int main(int argc, char * argv[]) {
 				else if (variable.compare("--csv") == 0) {
 					if (std::stoi(value) == 1)
 						save_csv = true; 
+					else
+						save_csv = false;
+				}
+				else if (variable.compare("--png") == 0) {
+					if (std::stoi(value) == 1)
+						save_png = true;
+					else
+						save_png = false;
 				}
 				else {
 					std::cout << variable << ": unknown variable" << endl;
@@ -326,6 +335,11 @@ int main(int argc, char * argv[]) {
 		if (save_csv != 0 && save_csv != 1) {
 			save_csv = false;
 			std::cout << "--csv must be 0 or 1" << std::endl;
+			return 1;
+		}
+		if (save_png != 0 && save_png != 1) {
+			save_png = false;
+			std::cout << "--png must be 0 or 1" << std::endl;
 			return 1;
 		}
 	}
@@ -429,27 +443,35 @@ int main(int argc, char * argv[]) {
 			((total_time_steps / time_step > 1000.0) ? 10.0 : 1.0))); // compare serial-parallel barnes-hut
 		
 
-		if (SAVE_PNG) { // Save final universes to png
+		if (save_png) { // Save final universes to png
 			std::cout << "Saving to PNG..." << std::endl;
 			
-			ParticleHandler::universe_to_png(particles, universe_size_x, universe_size_y, "init_universe.png");
-			
-			ParticleHandler::universe_to_png(particles_serial, universe_size_x, universe_size_y, "final_serial_universe.png");
-			ParticleHandler::universe_to_png(particles_serial_barnes_hut, universe_size_x, universe_size_y, "final_serial_universe_barnes_hut.png");
-			ParticleHandler::universe_to_png(ParticleHandler::to_vector(particles_parallel_barnes_hut), universe_size_x, universe_size_y, "final_parallel_universe_barnes_hut.png");
-			ParticleHandler::universe_to_png(ParticleHandler::to_vector(particles_tbb), universe_size_x, universe_size_y, "final_tbb_universe.png");
+			ParticleHandler::universe_to_png(particles, universe_size_x, universe_size_y,
+				"init_universe.png");			
+			ParticleHandler::universe_to_png(particles_serial, universe_size_x, universe_size_y,
+				"final_serial_universe.png");
+			ParticleHandler::universe_to_png(particles_serial_barnes_hut, universe_size_x, universe_size_y,
+				"final_serial_universe_barnes_hut.png");
+			ParticleHandler::universe_to_png(ParticleHandler::to_vector(particles_parallel_barnes_hut),
+				universe_size_x, universe_size_y, "final_parallel_universe_barnes_hut.png");
+			ParticleHandler::universe_to_png(ParticleHandler::to_vector(particles_tbb),
+				universe_size_x, universe_size_y, "final_tbb_universe.png");
 		}
 		
 		
-		if (save_csv) { // Save final universes to png
+		if (save_csv) { // Save final universes to csv
 			std::cout << "Saving to CSV..." << std::endl;
 			
-			ParticleHandler::universe_to_png(particles, universe_size_x, universe_size_y, "init_universe.png");
-			
-			ParticleHandler::universe_to_png(particles_serial, universe_size_x, universe_size_y, "final_serial_universe.png");
-			ParticleHandler::universe_to_png(particles_serial_barnes_hut, universe_size_x, universe_size_y, "final_serial_universe_barnes_hut.png");
-			ParticleHandler::universe_to_png(ParticleHandler::to_vector(particles_parallel_barnes_hut), universe_size_x, universe_size_y, "final_parallel_universe_barnes_hut.png");
-			ParticleHandler::universe_to_png(ParticleHandler::to_vector(particles_tbb), universe_size_x, universe_size_y, "final_tbb_universe.png");
+			ParticleHandler::universe_to_csv(particles,
+				"init_universe.csv");			
+			ParticleHandler::universe_to_csv(particles_serial,
+				"final_serial_universe.csv");
+			ParticleHandler::universe_to_csv(particles_serial_barnes_hut,
+				"final_serial_universe_barnes_hut.csv");
+			ParticleHandler::universe_to_csv(ParticleHandler::to_vector(particles_parallel_barnes_hut),
+				"final_parallel_universe_barnes_hut.csv");
+			ParticleHandler::universe_to_csv(ParticleHandler::to_vector(particles_tbb),
+				"final_tbb_universe.csv");
 		}
 		
 		std::cout << "Done!" << std::endl;

@@ -1,3 +1,5 @@
+#include <iostream>
+#include <fstream>
 #include <random>
 #include <string>
 #include "Settings.h"
@@ -70,6 +72,27 @@ void ParticleHandler::universe_to_png(const std::vector<Particle>& universe, siz
 	}
 	
 	writepng(std::string(filename), output_image);
+}
+
+// Generate a csv from the given particle collection
+void ParticleHandler::universe_to_csv(const std::vector<Particle>& universe, const char* filename) {
+	
+	ofstream output_csv;
+	
+	output_csv.open(std::string(filename));
+	
+	// Write columns
+	output_csv << "x,y,mass,velocity_x,velocity_y" << std::endl;
+	
+	// Write line for each particle
+	for (const Particle& current_particle : universe) {
+		output_csv << current_particle.x_ << "," << current_particle.y_ << "," 
+			<< current_particle.mass_  << ","
+			<< current_particle.velocity_x_ << "," << current_particle.velocity_y_ << ","
+			<< std::endl;
+	}
+	
+	output_csv.close();
 }
 
 // Convert a vector particle collection into a concurrent vector collection
