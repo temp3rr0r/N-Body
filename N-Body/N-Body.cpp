@@ -3,8 +3,6 @@
 #include "Particle.cpp"
 #include "QuadParticleTree.h"
 #include "QuadParticleTree.cpp"
-//#include "lodepng.h"
-//#include "lodepng.cpp"
 #include "ParticleHandler.h"
 #include "ParticleHandler.cpp"
 #include <iostream>
@@ -15,6 +13,7 @@
 #include <tbb/parallel_for.h>
 #include <tbb/task_scheduler_init.h>
 #include <cassert>
+#include <cstdlib>
 
 // Advance the simulation using Thread Bulding Blocks parallelization
 void simulate_tbb(tbb::concurrent_vector<Particle>& particles, float total_time_steps, float time_step, size_t particle_count,
@@ -111,7 +110,6 @@ void simulate_parallel_barnes_hut(tbb::concurrent_vector<Particle>& particles, f
 			png_step_counter = 0;
 			std::string file_name = "universe_serial_barnes_hut_timestep_" + std::to_string(current_time_step) + ".png";
 
-			// TODO: fix the ability to print universe
 			ParticleHandler::universe_to_png(ParticleHandler::to_vector(particles), universe_size_x, universe_size_y, file_name.c_str());
 		}
 	}
@@ -155,7 +153,6 @@ void simulate_serial_barnes_hut_sample(std::vector<Particle>& particles, float t
 			png_step_counter = 0;
 			std::string file_name = "universe_serial_barnes_hut_timestep_" + std::to_string(current_time_step) + ".png";
 
-			// TODO: fix the ability to print universe
 			ParticleHandler::universe_to_png(particles, universe_size_x, universe_size_y, file_name.c_str());
 		}
 	}
@@ -189,7 +186,6 @@ void simulate_serial_barnes_hut(std::vector<Particle>& particles, float total_ti
 			png_step_counter = 0;
 			std::string file_name = "universe_serial_barnes_hut_timestep_" + std::to_string(current_time_step) + ".png";
 
-			// TODO: fix the ability to print universe
 			ParticleHandler::universe_to_png(particles, universe_size_x, universe_size_y, file_name.c_str());
 		}
 	}
@@ -226,8 +222,8 @@ void simulate_serial(std::vector<Particle>& particles, float total_time_steps, f
 }
 
 // Application entry point
-int main()
-{
+int main(int argc, char * argv[]) {
+	
 	// Get the default simulation values
 	int thread_count = DEFAULT_NUMBER_OF_THREADS;
 	size_t particle_count = DEFAULT_PARTICLE_COUNT;
@@ -236,13 +232,59 @@ int main()
 	size_t universe_size_x = UNIVERSE_SIZE_X;
 	size_t universe_size_y = UNIVERSE_SIZE_Y;
 
-	// TODO: User input data
-	particle_count = 300;
-	total_time_steps = 10.0f;
+	// Default settings
+	particle_count = 30;
+	total_time_steps = 100.0f;
 	universe_size_x = 800;
 	universe_size_y = 800;
 	thread_count = 4;
 
+	// TODO: Command line arguments
+	if (argc > 7 || argc % 2 == 0) {
+		std::cout << "USAGE: " + string(argv[0]) + "\n -particles x\n -timesteps x\n -threads x" << endl;
+		return 1;
+	}
+		
+	if (argc > 1) {
+		for (int i = 1; i < argc; i+=2) {
+			if (argc >= i + 1) {
+				std::string variable = argv[i];
+				std::string value = argv[i + 1];
+				
+				if (variable.compare("-particles") == 0) {
+					particle_count = std::stoll(value);
+				}
+				else if (variable.compare("-timesteps") == 0) {
+					total_time_steps = std::stof(value);
+				}
+				else if (variable.compare("-threads") == 0) {
+					thread_count = std::stoi(value);
+				}
+				else {
+					std::cout << variable << " unknown variable" << endl;
+					return 1;
+				}
+			}		
+		}
+		
+		// Check input ranges
+		if (particle_count > 1000 * 1000 || particle_count < 10) {
+			particle_count = DEFAULT_PARTICLE_COUNT;
+			std::cout << "-particles must be more than 9 and less than 1.000.0000" << std::endl;
+			return 1;
+		}
+		if (total_time_steps > 1000 * 1000 || total_time_steps < 1) {
+			total_time_steps = DEFAULT_TOTAL_TIME_STEPS;
+			std::cout << "-timesteps must be more than 0 and less than 1.000.0000" << std::endl;
+			return 1;
+		}
+		if (thread_count > 100 || thread_count < 1) {
+			thread_count = DEFAULT_NUMBER_OF_THREADS;
+			std::cout << "-threads must be more than 0 and less than 100" << std::endl;
+			return 1;
+		}
+	}
+	
 	tbb::task_scheduler_init init(thread_count); // Set the number of threads on the TBB scheduler
 	
 	if (total_time_steps > 0.0 && particle_count > 0 && universe_size_x > 0 && universe_size_y > 0) {
@@ -263,11 +305,6 @@ int main()
 		// Put random particles
 		ParticleHandler::allocate_random_particles(particle_count, particles, universe_size_x, universe_size_y);
 
-		// TODO: Show Init vector universe
-		if (VERBOSE) {
-			std::cout << "Init Universe" << std::endl;
-		}
-
 		// Simulate
 
 		// Copy the particle universes into the serial and parallel execution containers
@@ -287,39 +324,68 @@ int main()
 		std::cout << std::endl << "Serial execution (Barnes-Hut)... ";
 		before = tbb::tick_count::now();
 		simulate_serial_barnes_hut(particles_serial_barnes_hut, total_time_steps, time_step, particle_count, universe_size_x, universe_size_y); // Advance Simulation serially
-		//simulate_serial_barnes_hut_sample(particles_serial_barnes_hut, total_time_steps, time_step, particle_count, universe_size_x, universe_size_y); // Advance Simulation serially
 		after = tbb::tick_count::now();
 		std::cout << 1000 * (after - before).seconds() << " ms" << std::endl;
 		
 		// Barnes Parallel execution
 		std::cout << std::endl << "Parallel execution (Barnes-Hut)... ";
 		before = tbb::tick_count::now();
-		//simulate_serial_barnes_hut(particles_serial_barnes_hut, total_time_steps, time_step, particle_count, universe_size_x, universe_size_y); // Advance parallel
 		simulate_parallel_barnes_hut(particles_parallel_barnes_hut, total_time_steps, time_step, particle_count, universe_size_x, universe_size_y); // Advance Simulation with TBB
 		after = tbb::tick_count::now();
 		std::cout << 1000 * (after - before).seconds() << " ms" << std::endl;
 		
 		// Benchmark the Thread Building Blocks execution
-		std::cout << std::endl << "Thread Building Blocks execution... ";
+		std::cout << std::endl << "Parallel Thread Building Blocks execution... ";
 		before = tbb::tick_count::now();
 		simulate_tbb(particles_tbb, total_time_steps, time_step, particle_count, universe_size_x, universe_size_y); // Advance Simulation with TBB
 		after = tbb::tick_count::now();
 		std::cout << 1000 * (after - before).seconds() << " ms" << std::endl;
 
-		// Assert the equality and validity of the results
-		//assert(ParticleHandler::are_equal(particles_serial, ParticleHandler::to_vector(particles_tbb)) == true); // compare serial with parallel
-		assert(ParticleHandler::are_equal(particles, particles_serial) == false); // compare serial with init
-		assert(ParticleHandler::are_equal(particles, ParticleHandler::to_vector(particles_tbb)) == false); // compare parallel with init
-
-		// TODO: Show universe in the console
-		if (VERBOSE) {
-
-			std::cout << "Final Universe Serial" << std::endl;
-			//grid_modifier.debug_show_universe(universe_serial, universe_size_x, universe_size_y);
-
-			std::cout << "Final Universe TBB" << std::endl;
-			//grid_modifier.debug_show_universe(UniverseModifier::to_vector(universe_tbb), universe_size_x, universe_size_y);
-		}
+		// Assert the equality and validity of the results		
+		std::cout << std::endl << "Asserting all results.. " << std::endl;
+				
+		// Assert the count of the particles
+		assert(particles_serial.size() == particle_count);		
+		assert(particles_tbb.size() == particle_count);
+		assert(particles_serial_barnes_hut.size() == particle_count);
+		assert(particles_parallel_barnes_hut.size() == particle_count);
+		
+		// Assert the total weight of the particles	hasn't changed
+		float init_total_mass = 0.0f;
+		for (const Particle& current_particle : particles)
+			init_total_mass += current_particle.mass_;
+		
+		float serial_mass = 0.0f;
+		for (const Particle& current_particle : particles_serial)
+			serial_mass += current_particle.mass_;			
+		
+		float tbb_mass = 0.0f;
+		for (const Particle& current_particle : particles_tbb)
+			tbb_mass += current_particle.mass_;
+			
+		float barnes_hut_mass = 0.0f;
+		for (const Particle& current_particle : particles_serial_barnes_hut)
+			barnes_hut_mass += current_particle.mass_;
+			
+		float parallel_barnes_hut_mass = 0.0f;
+		for (const Particle& current_particle : particles_parallel_barnes_hut)
+			parallel_barnes_hut_mass += current_particle.mass_;		
+		
+		std::cout << "Total mass(serial): " << init_total_mass << std::endl;
+		std::cout << "Total mass(tbb):" << tbb_mass << std::endl;
+		std::cout << "Total mass(bh):" << barnes_hut_mass << std::endl;
+		std::cout << "Total mass(parallel bh):" << parallel_barnes_hut_mass << std::endl;
+		
+		assert(init_total_mass == serial_mass);
+		assert(init_total_mass == tbb_mass);
+		assert(init_total_mass == barnes_hut_mass);
+		assert(init_total_mass == parallel_barnes_hut_mass);
+		
+		// Assert that the serial and the results are similar
+		assert(ParticleHandler::are_equal(particles_serial, ParticleHandler::to_vector(particles_tbb))); // compare serial with parallel tbb
+		assert(ParticleHandler::are_equal(particles_serial_barnes_hut, ParticleHandler::to_vector(particles_parallel_barnes_hut))); // compare serial-parallel barnes-hut
+				
+		std::cout << std::endl << "Done!" << std::endl;
 
 		if (SAVE_PNG) { // Save final universes to png
 			ParticleHandler::universe_to_png(particles, universe_size_x, universe_size_y, "init_universe.png");

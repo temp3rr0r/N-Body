@@ -89,22 +89,25 @@ std::vector<Particle> ParticleHandler::to_vector(const tbb::concurrent_vector<Pa
 	return returning_vector;
 }
 
+float get_comparison_tolerance(float first_float, float second_float) {
+	return fabs(first_float - second_float);
+}
+
 // Check if two particle collections contain exactly the same particles in terms of location, velocity, mass and acceleration
 bool ParticleHandler::are_equal(const std::vector<Particle>& first_particles, const std::vector<Particle>& second_particles) {
 	
 	bool are_equal = false;
+	float position_tolerance = 100.0f;
+	float mass_tolerance = 0.01f;
 
 	if (first_particles.size() == second_particles.size()) {
 		are_equal = true;
 		for (size_t i = 0; i < first_particles.size(); ++i) {
-			// TODO: comparision should be within a floating point limit, not exact...
-			if (first_particles[i].velocity_x_ != second_particles[i].velocity_x_ || first_particles[i].velocity_y_ != second_particles[i].velocity_y_ ||
-				first_particles[i].x_ != second_particles[i].x_ || first_particles[i].y_ != second_particles[i].y_ ||
-				first_particles[i].acceleration_x_ != second_particles[i].acceleration_x_ ||
-				first_particles[i].acceleration_y_ != second_particles[i].acceleration_y_ || first_particles[i].mass_ != second_particles[i].mass_) {
-
-				are_equal = false;
-				break;
+			if (get_comparison_tolerance(first_particles[i].x_, second_particles[i].x_) > position_tolerance ||
+				get_comparison_tolerance(first_particles[i].y_, second_particles[i].y_) > position_tolerance ||				
+				get_comparison_tolerance(first_particles[i].mass_, second_particles[i].mass_) > mass_tolerance) {
+				std::cout << "Tolerance[" << i <<"]: " << get_comparison_tolerance(first_particles[i].mass_, second_particles[i].mass_) << std::endl;
+				return false;
 			}
 		}
 	}	

@@ -46,7 +46,6 @@ void QuadParticleTree::insert(TreeParticle* point) {
 		// If the node is a leaf, we don't have to "dive" any depper in the tree
 
 		// Apply center of mass calculations
-		// TODO: what if there are already children in the leaf?
 		this->total_mass_ += point->get_mass();
 		this->center_of_mass_x_ += point->get_particle().x_;
 		this->center_of_mass_y_ += point->get_particle().y_;
@@ -121,7 +120,7 @@ void QuadParticleTree::apply_acceleration(Particle& input_particle) const {
 		float distance_from_center_of_mass = input_particle.get_distance(center_of_mass_particle);
 		float side = get_side_size();
 
-		if (side / distance_from_center_of_mass > THETA) { // TODO: less or greater?
+		if (side / distance_from_center_of_mass > THETA) {
 			// Go deeper in the tree
 			int quadtrant = get_quadrant_containing_point(input_particle);
 			children[quadtrant]->apply_acceleration(input_particle);
