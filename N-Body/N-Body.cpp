@@ -308,14 +308,14 @@ int main(int argc, char * argv[]) {
 			return 1;
 		}
 		
-		if (universe_size_x > 4000 || universe_size_x < 10) {
+		if (universe_size_x > 5000 || universe_size_x < 10) {
 			universe_size_x = UNIVERSE_SIZE_X;
-			std::cout << "-universe_size_x must be >= 10 and <= 4000" << std::endl;
+			std::cout << "-universe_size_x must be >= 10 and <= 5000" << std::endl;
 			return 1;
 		}
-		if (universe_size_y > 4000 || universe_size_y < 10) {
+		if (universe_size_y > 5000 || universe_size_y < 10) {
 			universe_size_y = UNIVERSE_SIZE_Y;
-			std::cout << "-universe_size_y must be >= 10 and <= 4000" << std::endl;
+			std::cout << "-universe_size_y must be >= 10 and <= 5000" << std::endl;
 			return 1;
 		}
 	}
@@ -330,7 +330,7 @@ int main(int argc, char * argv[]) {
 		std::cout << "Total time steps: " << total_time_steps << std::endl;
 		std::cout << "Time step: " << time_step << std::endl;
 		std::cout << "Particle count: " << particle_count << std::endl;
-		std::cout << "Universe Size: " << universe_size_x << " x " << universe_size_y << std::endl << std::endl;
+		std::cout << "Universe Size: " << universe_size_y << " x " << universe_size_x << std::endl << std::endl;
 
 		tbb::tick_count before, after; // Execution timers
 
