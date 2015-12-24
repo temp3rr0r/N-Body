@@ -1,8 +1,10 @@
 #include <random>
+#include <string>
 #include "Settings.h"
 #include "ParticleHandler.h"
 #include <tbb/concurrent_vector.h>
-//#include "lodepng.h"
+#include "pngio.h"
+#include "pngio.cpp"
 #include "TreeParticle.h"
 #include "QuadParticleTree.h"
 
@@ -49,28 +51,23 @@ std::vector<Particle> ParticleHandler::get_random_particles_Barns_Hut_sample() {
 
 // Generate an image from the given particle collection
 void ParticleHandler::universe_to_png(const std::vector<Particle>& universe, size_t universe_size_x, size_t universe_size_y, const char* filename) {
-	uint32_t width = static_cast<uint32_t>(universe_size_y);
-	uint32_t height = static_cast<uint32_t>(universe_size_x);
-	std::vector<uint8_t> image;
-	image.resize(width * height * 4);
-
+	ImageRGB output_image;
+	output_image.width = universe_size_y;
+	output_image.height = universe_size_x;
+	
 	// Paint all black
-	for (uint32_t x = 0; x < height; x++) {
-		for (uint32_t y = 0; y < width; y++) {
-			image[4 * width * x + 4 * y + 0] = 0;
-			image[4 * width * x + 4 * y + 1] = 0;
-			image[4 * width * x + 4 * y + 2] = 0;
-			image[4 * width * x + 4 * y + 3] = 255;
+	for (size_t x = 0; x != output_image.height; ++x) {
+		for (size_t y = 0; y != output_image.width; ++y) {
+			output_image.data.push_back({0, 0, 0});
 		}
 	}
 
 	// Paint red all the particles
 	for (const Particle& current_particle : universe) {
-		image[4 * width * static_cast<uint32_t>(current_particle.x_) + 4 * static_cast<uint32_t>(current_particle.y_) + 0] = 255; // red
+		output_image.data[current_particle.x_ * output_image.width + current_particle.y_][0] = 255;		
 	}
-
-	// Do save to png
-	//lodepng::encode(filename, image, width, height); // TODO: Use libpng
+	
+	writepng(std::string(filename), output_image);
 }
 
 // Convert a vector particle collection into a concurrent vector collection
