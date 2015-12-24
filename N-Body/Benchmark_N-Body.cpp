@@ -191,9 +191,9 @@ int main(int argc, char * argv[]) {
 	
 	size_t benchmark_repeat_count = 1;
 	
-	size_t benchmark_init_particle_count = 1000;	
+	size_t benchmark_init_particle_count = 350;	
 	size_t benchmark_particle_count_multiplier = 10;	
-	size_t benchmark_max_particle_count = 1000;//1000 * 1000;
+	size_t benchmark_max_particle_count = 350;//1000 * 1000;
 	
 	float benchmark_init_total_timesteps = 0.01f;
 	float benchmark_max_total_timesteps = 1.0f;
@@ -235,11 +235,12 @@ int main(int argc, char * argv[]) {
 				
 				float total_time_steps_benchmark = total_time_steps;
 				float time_step_benchmark = time_step;
+				float average_execution_time = 0.0f;
 						
 				
 				// Benchmark the Serial execution
 				execution_type = "serial";
-				float average_execution_time = 0.0f;
+				average_execution_time = 0.0f;
 				for (size_t current_repeat_count = 0; current_repeat_count < benchmark_repeat_count; current_repeat_count++) {
 					std::vector<Particle> particles_serial(particles);
 					before = tbb::tick_count::now();

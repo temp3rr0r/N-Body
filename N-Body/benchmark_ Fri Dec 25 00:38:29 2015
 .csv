@@ -1,0 +1,17 @@
+execution_time,execution_type,thread_count,particle_count,total_timesteps,timestep,repeat_count
+4276.73,serial,1,350,10,0.01,1
+203.103,barnes_serial,1,350,10,0.01,1
+218.492,barnes_parallel,1,350,10,0.01,1
+2470.77,tbb_parallel,1,350,10,0.01,1
+4272.79,serial,2,350,10,0.01,1
+200.159,barnes_serial,2,350,10,0.01,1
+229.689,barnes_parallel,2,350,10,0.01,1
+1301.3,tbb_parallel,2,350,10,0.01,1
+4272.78,serial,3,350,10,0.01,1
+214.513,barnes_serial,3,350,10,0.01,1
+241.26,barnes_parallel,3,350,10,0.01,1
+910.672,tbb_parallel,3,350,10,0.01,1
+4272.79,serial,4,350,10,0.01,1
+216.624,barnes_serial,4,350,10,0.01,1
+239.959,barnes_parallel,4,350,10,0.01,1
+727.34,tbb_parallel,4,350,10,0.01,1
