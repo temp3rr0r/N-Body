@@ -5,6 +5,7 @@
 
 static const bool VERBOSE = false;
 static const bool SAVE_PNG = true;
+static const bool SAVE_CSV = false;
 
 static const bool SAVE_INTERMEDIATE_PNG_STEPS = false;
 static const int SAVE_PNG_EVERY = 500;

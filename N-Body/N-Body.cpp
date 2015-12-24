@@ -235,6 +235,7 @@ int main(int argc, char * argv[]) {
 	float time_step = TIME_STEP;
 	size_t universe_size_x = UNIVERSE_SIZE_X;
 	size_t universe_size_y = UNIVERSE_SIZE_Y;
+	bool save_csv = SAVE_CSV;
 
 	// Default runtime settings
 	particle_count = 1000;
@@ -243,10 +244,10 @@ int main(int argc, char * argv[]) {
 	universe_size_y = 600;
 	thread_count = 4;
 
-	if (argc > 13 || argc % 2 == 0) {
+	if (argc > 15 || argc % 2 == 0) {
 		std::cout << "USAGE:\n" + string(argv[0]) + "\n" 
 			<< "OPTIONS:\n --particles x\n --totaltimesteps x\n --threads x\n --timestep x\n" 
-			<< " --universe_size_x x\n --universe_size_y x\n --help\n"
+			<< " --universe_size_x x\n --universe_size_y x\n --csv 0/1\n --help\n"
 			<< "EXAMPLES:" << std::endl
 			<< string(argv[0]) << " --threads 2" << std::endl
 			<< string(argv[0]) << " --threads 1" << " --particles 30" << std::endl
@@ -279,6 +280,10 @@ int main(int argc, char * argv[]) {
 				else if (variable.compare("--universe_size_y") == 0) {
 					universe_size_y = std::stoll(value);
 				}
+				else if (variable.compare("--csv") == 0) {
+					if (std::stoi(value) == 1)
+						save_csv = true; 
+				}
 				else {
 					std::cout << variable << ": unknown variable" << endl;
 					return 1;
@@ -289,33 +294,38 @@ int main(int argc, char * argv[]) {
 		// Check input ranges
 		if (particle_count > 1000 * 1000 || particle_count < 10) {
 			particle_count = DEFAULT_PARTICLE_COUNT;
-			std::cout << "-particles must be more than 9 and less than 1.000.0000" << std::endl;
+			std::cout << "--particles must be more than 9 and less than 1.000.0000" << std::endl;
 			return 1;
 		}
 		if (total_time_steps > 1000 * 1000 || total_time_steps < 1) {
 			total_time_steps = DEFAULT_TOTAL_TIME_STEPS;
-			std::cout << "-totaltimesteps must be more than 0 and less than 1.000.0000" << std::endl;
+			std::cout << "--totaltimesteps must be more than 0 and less than 1.000.0000" << std::endl;
 			return 1;
 		}
 		if (thread_count > 100 || thread_count < 1) {
 			thread_count = DEFAULT_NUMBER_OF_THREADS;
-			std::cout << "-threads must be more than 0 and less than 100" << std::endl;
+			std::cout << "--threads must be more than 0 and less than 100" << std::endl;
 			return 1;
 		}
 		if (time_step > 10000 || time_step < 0.001 || time_step > total_time_steps) {
 			time_step = TIME_STEP;
-			std::cout << "-timestep must be >= 0.001, less than 10000 and less than the total time steps" << std::endl;
+			std::cout << "--timestep must be >= 0.001, less than 10000 and less than the total time steps" << std::endl;
 			return 1;
 		}
 		
 		if (universe_size_x > 5000 || universe_size_x < 10) {
 			universe_size_x = UNIVERSE_SIZE_X;
-			std::cout << "-universe_size_x must be >= 10 and <= 5000" << std::endl;
+			std::cout << "--universe_size_x must be >= 10 and <= 5000" << std::endl;
 			return 1;
 		}
 		if (universe_size_y > 5000 || universe_size_y < 10) {
 			universe_size_y = UNIVERSE_SIZE_Y;
-			std::cout << "-universe_size_y must be >= 10 and <= 5000" << std::endl;
+			std::cout << "--universe_size_y must be >= 10 and <= 5000" << std::endl;
+			return 1;
+		}
+		if (save_csv != 0 && save_csv != 1) {
+			save_csv = false;
+			std::cout << "--csv must be 0 or 1" << std::endl;
 			return 1;
 		}
 	}
@@ -417,10 +427,11 @@ int main(int argc, char * argv[]) {
 			((total_time_steps / time_step > 1000.0) ? 10.0 : 1.0))); // compare serial with parallel tbb
 		assert(ParticleHandler::are_equal(particles_serial_barnes_hut, ParticleHandler::to_vector(particles_parallel_barnes_hut),
 			((total_time_steps / time_step > 1000.0) ? 10.0 : 1.0))); // compare serial-parallel barnes-hut
-				
-		std::cout << "Done!" << std::endl;
+		
 
 		if (SAVE_PNG) { // Save final universes to png
+			std::cout << "Saving to PNG..." << std::endl;
+			
 			ParticleHandler::universe_to_png(particles, universe_size_x, universe_size_y, "init_universe.png");
 			
 			ParticleHandler::universe_to_png(particles_serial, universe_size_x, universe_size_y, "final_serial_universe.png");
@@ -428,6 +439,20 @@ int main(int argc, char * argv[]) {
 			ParticleHandler::universe_to_png(ParticleHandler::to_vector(particles_parallel_barnes_hut), universe_size_x, universe_size_y, "final_parallel_universe_barnes_hut.png");
 			ParticleHandler::universe_to_png(ParticleHandler::to_vector(particles_tbb), universe_size_x, universe_size_y, "final_tbb_universe.png");
 		}
+		
+		
+		if (save_csv) { // Save final universes to png
+			std::cout << "Saving to CSV..." << std::endl;
+			
+			ParticleHandler::universe_to_png(particles, universe_size_x, universe_size_y, "init_universe.png");
+			
+			ParticleHandler::universe_to_png(particles_serial, universe_size_x, universe_size_y, "final_serial_universe.png");
+			ParticleHandler::universe_to_png(particles_serial_barnes_hut, universe_size_x, universe_size_y, "final_serial_universe_barnes_hut.png");
+			ParticleHandler::universe_to_png(ParticleHandler::to_vector(particles_parallel_barnes_hut), universe_size_x, universe_size_y, "final_parallel_universe_barnes_hut.png");
+			ParticleHandler::universe_to_png(ParticleHandler::to_vector(particles_tbb), universe_size_x, universe_size_y, "final_tbb_universe.png");
+		}
+		
+		std::cout << "Done!" << std::endl;
 	}
 
 }
