@@ -1,15 +1,20 @@
 #include "Settings.h"
+#include "Particle.h"
+#include "Particle.cpp"
+#include "QuadParticleTree.h"
+#include "QuadParticleTree.cpp"
+//#include "lodepng.h"
+//#include "lodepng.cpp"
+#include "ParticleHandler.h"
+#include "ParticleHandler.cpp"
 #include <iostream>
 #include <vector>
 #include <tbb/tick_count.h>
-#include "Particle.h"
 #include <tbb/cache_aligned_allocator.h>
 #include <tbb/concurrent_vector.h>
-#include "ParticleHandler.h"
 #include <tbb/parallel_for.h>
 #include <tbb/task_scheduler_init.h>
 #include <cassert>
-#include "QuadParticleTree.h"
 
 // Advance the simulation using Thread Bulding Blocks parallelization
 void simulate_tbb(tbb::concurrent_vector<Particle>& particles, float total_time_steps, float time_step, size_t particle_count,
@@ -272,11 +277,11 @@ int main()
 		tbb::concurrent_vector<Particle, tbb::cache_aligned_allocator<Particle>> particles_parallel_barnes_hut(ParticleHandler::to_concurrent_vector(particles));
 
 		// Benchmark the Serial execution
-//		std::cout << std::endl << "Serial execution... ";
-//		before = tbb::tick_count::now();
-//		simulate_serial(particles_serial, total_time_steps, time_step, particle_count, universe_size_x, universe_size_y); // Advance Simulation serially
-//		after = tbb::tick_count::now();
-//		std::cout << 1000 * (after - before).seconds() << " ms" << std::endl;
+		std::cout << std::endl << "Serial execution... ";
+		before = tbb::tick_count::now();
+		simulate_serial(particles_serial, total_time_steps, time_step, particle_count, universe_size_x, universe_size_y); // Advance Simulation serially
+		after = tbb::tick_count::now();
+		std::cout << 1000 * (after - before).seconds() << " ms" << std::endl;
 
 		// Barnes Serial execution
 		std::cout << std::endl << "Serial execution (Barnes-Hut)... ";
@@ -323,8 +328,6 @@ int main()
 			ParticleHandler::universe_to_png(ParticleHandler::to_vector(particles_parallel_barnes_hut), universe_size_x, universe_size_y, "final_parallel_universe_barnes_hut.png");
 			ParticleHandler::universe_to_png(ParticleHandler::to_vector(particles_tbb), universe_size_x, universe_size_y, "final_tbb_universe.png");
 		}
-
-		system("pause");
 	}
 
 }

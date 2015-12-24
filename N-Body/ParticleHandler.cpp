@@ -2,7 +2,7 @@
 #include "Settings.h"
 #include "ParticleHandler.h"
 #include <tbb/concurrent_vector.h>
-#include "lodepng.h"
+//#include "lodepng.h"
 #include "TreeParticle.h"
 #include "QuadParticleTree.h"
 
@@ -70,7 +70,7 @@ void ParticleHandler::universe_to_png(const std::vector<Particle>& universe, siz
 	}
 
 	// Do save to png
-	lodepng::encode(filename, image, width, height);
+	//lodepng::encode(filename, image, width, height); // TODO: Use libpng
 }
 
 // Convert a vector particle collection into a concurrent vector collection
