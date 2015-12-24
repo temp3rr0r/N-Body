@@ -234,14 +234,15 @@ int main(int argc, char * argv[]) {
 
 	// Default settings
 	particle_count = 30;
-	total_time_steps = 100.0f;
+	total_time_steps = 10.0f;
 	universe_size_x = 800;
 	universe_size_y = 800;
 	thread_count = 4;
 
 	// TODO: Command line arguments
-	if (argc > 7 || argc % 2 == 0) {
-		std::cout << "USAGE: " + string(argv[0]) + "\n -particles x\n -timesteps x\n -threads x" << endl;
+	if (argc > 13 || argc % 2 == 0) {
+		std::cout << "USAGE: " + string(argv[0]) + "\n -particles x\n -totaltimesteps x\n -threads x\n -timestep x\n" 
+			<< " -universe_size_x x\n -universe_size_y x\n" << endl;
 		return 1;
 	}
 		
@@ -254,11 +255,20 @@ int main(int argc, char * argv[]) {
 				if (variable.compare("-particles") == 0) {
 					particle_count = std::stoll(value);
 				}
-				else if (variable.compare("-timesteps") == 0) {
+				else if (variable.compare("-totaltimesteps") == 0) {
 					total_time_steps = std::stof(value);
 				}
 				else if (variable.compare("-threads") == 0) {
 					thread_count = std::stoi(value);
+				}
+				else if (variable.compare("-timestep") == 0) {
+					time_step = std::stof(value);
+				}
+				else if (variable.compare("-universe_size_x") == 0) {
+					universe_size_x = std::stoll(value);
+				}
+				else if (variable.compare("-universe_size_y") == 0) {
+					universe_size_y = std::stoll(value);
 				}
 				else {
 					std::cout << variable << " unknown variable" << endl;
@@ -275,12 +285,28 @@ int main(int argc, char * argv[]) {
 		}
 		if (total_time_steps > 1000 * 1000 || total_time_steps < 1) {
 			total_time_steps = DEFAULT_TOTAL_TIME_STEPS;
-			std::cout << "-timesteps must be more than 0 and less than 1.000.0000" << std::endl;
+			std::cout << "-totaltimesteps must be more than 0 and less than 1.000.0000" << std::endl;
 			return 1;
 		}
 		if (thread_count > 100 || thread_count < 1) {
 			thread_count = DEFAULT_NUMBER_OF_THREADS;
 			std::cout << "-threads must be more than 0 and less than 100" << std::endl;
+			return 1;
+		}
+		if (time_step > 10000 || time_step < 0.001 || time_step > total_time_steps) {
+			time_step = TIME_STEP;
+			std::cout << "-timestep must be >= 0.001, less than 10000 and less than the total time steps" << std::endl;
+			return 1;
+		}
+		
+		if (universe_size_x > 4000 || universe_size_x < 10) {
+			universe_size_x = UNIVERSE_SIZE_X;
+			std::cout << "-universe_size_x must be >= 10 and <= 4000" << std::endl;
+			return 1;
+		}
+		if (universe_size_y > 4000 || universe_size_y < 10) {
+			universe_size_y = UNIVERSE_SIZE_Y;
+			std::cout << "-universe_size_y must be >= 10 and <= 4000" << std::endl;
 			return 1;
 		}
 	}
@@ -352,6 +378,7 @@ int main(int argc, char * argv[]) {
 		
 		// Assert the total weight of the particles	hasn't changed
 		float init_total_mass = 0.0f;
+		float mass_difference_tolerance = 1.0f;
 		for (const Particle& current_particle : particles)
 			init_total_mass += current_particle.mass_;
 		
@@ -371,21 +398,18 @@ int main(int argc, char * argv[]) {
 		for (const Particle& current_particle : particles_parallel_barnes_hut)
 			parallel_barnes_hut_mass += current_particle.mass_;		
 		
-		std::cout << "Total mass(serial): " << init_total_mass << std::endl;
-		std::cout << "Total mass(tbb):" << tbb_mass << std::endl;
-		std::cout << "Total mass(bh):" << barnes_hut_mass << std::endl;
-		std::cout << "Total mass(parallel bh):" << parallel_barnes_hut_mass << std::endl;
-		
-		assert(init_total_mass == serial_mass);
-		assert(init_total_mass == tbb_mass);
-		assert(init_total_mass == barnes_hut_mass);
-		assert(init_total_mass == parallel_barnes_hut_mass);
+		assert(fabs(init_total_mass - serial_mass) < mass_difference_tolerance);
+		assert(fabs(init_total_mass - tbb_mass) < mass_difference_tolerance);
+		assert(fabs(init_total_mass - barnes_hut_mass) < mass_difference_tolerance);
+		assert(fabs(init_total_mass - parallel_barnes_hut_mass) < mass_difference_tolerance);
 		
 		// Assert that the serial and the results are similar
-		assert(ParticleHandler::are_equal(particles_serial, ParticleHandler::to_vector(particles_tbb))); // compare serial with parallel tbb
-		assert(ParticleHandler::are_equal(particles_serial_barnes_hut, ParticleHandler::to_vector(particles_parallel_barnes_hut))); // compare serial-parallel barnes-hut
+		assert(ParticleHandler::are_equal(particles_serial, ParticleHandler::to_vector(particles_tbb),
+			((total_time_steps / time_step > 1000.0) ? 10.0 : 1.0))); // compare serial with parallel tbb
+		assert(ParticleHandler::are_equal(particles_serial_barnes_hut, ParticleHandler::to_vector(particles_parallel_barnes_hut),
+			((total_time_steps / time_step > 1000.0) ? 10.0 : 1.0))); // compare serial-parallel barnes-hut
 				
-		std::cout << std::endl << "Done!" << std::endl;
+		std::cout << "Done!" << std::endl;
 
 		if (SAVE_PNG) { // Save final universes to png
 			ParticleHandler::universe_to_png(particles, universe_size_x, universe_size_y, "init_universe.png");

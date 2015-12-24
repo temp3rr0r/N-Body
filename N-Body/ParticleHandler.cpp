@@ -89,7 +89,7 @@ std::vector<Particle> ParticleHandler::to_vector(const tbb::concurrent_vector<Pa
 	return returning_vector;
 }
 
-float get_comparison_tolerance(float first_float, float second_float) {
+float ParticleHandler::get_comparison_tolerance(float first_float, float second_float) {
 	return fabs(first_float - second_float);
 }
 
@@ -99,6 +99,26 @@ bool ParticleHandler::are_equal(const std::vector<Particle>& first_particles, co
 	bool are_equal = false;
 	float position_tolerance = 100.0f;
 	float mass_tolerance = 0.01f;
+
+	if (first_particles.size() == second_particles.size()) {
+		are_equal = true;
+		for (size_t i = 0; i < first_particles.size(); ++i) {
+			if (get_comparison_tolerance(first_particles[i].x_, second_particles[i].x_) > position_tolerance ||
+				get_comparison_tolerance(first_particles[i].y_, second_particles[i].y_) > position_tolerance ||				
+				get_comparison_tolerance(first_particles[i].mass_, second_particles[i].mass_) > mass_tolerance) {
+				std::cout << "Tolerance[" << i <<"]: " << get_comparison_tolerance(first_particles[i].mass_, second_particles[i].mass_) << std::endl;
+				return false;
+			}
+		}
+	}	
+	return are_equal;
+}
+
+bool ParticleHandler::are_equal(const std::vector<Particle>& first_particles, const std::vector<Particle>& second_particles, float tolerance_multiplier) {
+	
+	bool are_equal = false;
+	float position_tolerance = 100.0f * tolerance_multiplier;
+	float mass_tolerance = 0.01f * tolerance_multiplier;
 
 	if (first_particles.size() == second_particles.size()) {
 		are_equal = true;

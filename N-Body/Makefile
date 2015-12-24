@@ -3,5 +3,5 @@ all:
 run:
 	./nbody
 clean:
-	rm *.o
 	rm *.png
+	rm nbody
