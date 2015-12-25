@@ -191,9 +191,9 @@ int main(int argc, char * argv[]) {
 	
 	size_t benchmark_repeat_count = 1;
 	
-	size_t benchmark_init_particle_count = 10000;	
+	size_t benchmark_init_particle_count = 10;	
 	size_t benchmark_particle_count_multiplier = 10;	
-	size_t benchmark_max_particle_count = 10000;//1000 * 1000;
+	size_t benchmark_max_particle_count = 1000;//1000 * 1000;
 	
 	float benchmark_init_total_timesteps = 0.01f;
 	float benchmark_max_total_timesteps = 1.0f;
