@@ -1,8 +1,8 @@
 #pragma once
 
-#include <vector>
 #include "TreeParticle.h"
 #include "Particle.h"
+#include <cstdint>
 
 // A Quad tree that stores collections of particles
 class QuadParticleTree {

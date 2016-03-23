@@ -234,8 +234,8 @@ int main()
 	// TODO: User input data
 	particle_count = 300;
 	total_time_steps = 10.0f;
-	universe_size_x = 800;
-	universe_size_y = 800;
+	universe_size_x = 300;
+	universe_size_y = 300;
 	thread_count = 4;
 
 	tbb::task_scheduler_init init(thread_count); // Set the number of threads on the TBB scheduler
@@ -272,11 +272,11 @@ int main()
 		tbb::concurrent_vector<Particle, tbb::cache_aligned_allocator<Particle>> particles_parallel_barnes_hut(ParticleHandler::to_concurrent_vector(particles));
 
 		// Benchmark the Serial execution
-//		std::cout << std::endl << "Serial execution... ";
-//		before = tbb::tick_count::now();
-//		simulate_serial(particles_serial, total_time_steps, time_step, particle_count, universe_size_x, universe_size_y); // Advance Simulation serially
-//		after = tbb::tick_count::now();
-//		std::cout << 1000 * (after - before).seconds() << " ms" << std::endl;
+		std::cout << std::endl << "Serial execution... ";
+		before = tbb::tick_count::now();
+		simulate_serial(particles_serial, total_time_steps, time_step, particle_count, universe_size_x, universe_size_y); // Advance Simulation serially
+		after = tbb::tick_count::now();
+		std::cout << 1000 * (after - before).seconds() << " ms" << std::endl;
 
 		// Barnes Serial execution
 		std::cout << std::endl << "Serial execution (Barnes-Hut)... ";
@@ -302,7 +302,7 @@ int main()
 		std::cout << 1000 * (after - before).seconds() << " ms" << std::endl;
 
 		// Assert the equality and validity of the results
-		//assert(ParticleHandler::are_equal(particles_serial, ParticleHandler::to_vector(particles_tbb)) == true); // compare serial with parallel
+		assert(ParticleHandler::are_equal(particles_serial, ParticleHandler::to_vector(particles_tbb)) == true); // compare serial with parallel
 		assert(ParticleHandler::are_equal(particles, particles_serial) == false); // compare serial with init
 		assert(ParticleHandler::are_equal(particles, ParticleHandler::to_vector(particles_tbb)) == false); // compare parallel with init
 

@@ -25,8 +25,8 @@ static const float THETA = 0.5f;
 
 static const uint8_t MAX_TREE_DEPTH = 100;
 
-static const int UNIVERSE_SIZE_X = 800;
-static const int UNIVERSE_SIZE_Y = 800;
+static const int UNIVERSE_SIZE_X = 300;
+static const int UNIVERSE_SIZE_Y = 300;
 
 
 
