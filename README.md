@@ -7,7 +7,7 @@ Simulations of dynamical systems of particles are often used in physics to predi
 - Parallelization using *Intel Thread Building Blocks*
 
 ### Documentation
-Documentation comparing the speed-up between the serial and parallel versions: http://1drv.ms/1TvdwIo
+Documentation comparing the speed-up between the serial and parallel versions: https://onedrive.live.com/redir?resid=F3C315EB7F683B03!16208&authkey=!ABgFWP56pvq2rCs&ithint=file%2cpdf
 
 ###References
 1. *Intel Developer zone - n-bodies: a parallel TBB solution: computing accelerations? or forces?* - https://software.intel.com/enus/blogs/2009/09/22/n-bodies-a-parallel-tbb-solution-computingaccelerations-or-forces
